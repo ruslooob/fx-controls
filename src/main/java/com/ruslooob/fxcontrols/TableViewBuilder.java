@@ -5,11 +5,10 @@ import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import javafx.collections.transformation.SortedList;
 import javafx.geometry.Insets;
-import javafx.scene.control.Label;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableView;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.scene.control.cell.TextFieldTableCell;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.util.StringConverter;
 
@@ -54,8 +53,10 @@ public class TableViewBuilder<S> {
         var filteredData = new FilteredList<>(items, p -> true);
         Map<String, Predicate<S>> predicateMap = new HashMap<>();
         for (var columnInfo : columnInfos) {
-            TextField filter = filtersByName.get(columnInfo.columnName());
-            filter.textProperty().addListener((obs, oldVal, newVal) -> {
+            TextField filterTextField = filtersByName.get(columnInfo.columnName());
+            // todo каждый раз когда меняется текст, меняется и предикат
+            // todo каждый раз, когда меняется и тип фильтра, предикат тоже должен меняться
+            filterTextField.textProperty().addListener((obs, oldVal, newVal) -> {
                 predicateMap.put(columnInfo.columnName(), createPredicate(columnInfo, newVal));
                 filteredData.setPredicate(
                         predicateMap.values().stream().reduce(Predicate::and).orElse(record -> true));
@@ -74,32 +75,44 @@ public class TableViewBuilder<S> {
 
     private <T> Pair<TableColumn<S, T>, TextField> createColumnAndFilter(ColumnInfo<S, T> columnInfo) {
         var col = new TableColumn<S, T>();
+        col.setPrefWidth(200);
         String colName = columnInfo.columnName();
         col.setId(colName);
         col.setCellValueFactory(cellData -> columnInfo.propertyGetter().apply(cellData.getValue()));
 
         if (columnInfo.columnType() == ColumnType.DATE) {
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM.dd.yyyy");
-
             col.setCellFactory(TextFieldTableCell.forTableColumn(new StringConverter<>() {
                 @Override
                 public String toString(T date) {
-                    return date != null ? ((LocalDate) date).format(formatter) : "";
+                    return date != null ? ((LocalDate) date).format(dateFormatter) : "";
                 }
 
                 @Override
                 public T fromString(String string) {
-                    return string != null && !string.isEmpty() ? (T) LocalDate.parse(string, formatter) : null;
+                    return string != null && !string.isEmpty() ? (T) LocalDate.parse(string, dateFormatter) : null;
                 }
             }));
         }
 
-        var colFilter = new TextField();
-        colFilter.setId(colName + "-tf");
-        var colNameWithFilterVBox = new VBox(new Label(colName), colFilter);
+        var filterTextField = new TextField();
+        filterTextField.setId(colName + "-tf");
+
+        var filterTypeComboBox = new ComboBox<String>();
+        filterTypeComboBox.getItems().addAll("=", "!=");
+        filterTypeComboBox.setValue("=");
+        filterTypeComboBox.getStyleClass().add("button-combo-box");
+
+        var colNameWithFilterVBox = new VBox(
+                new Label(colName),
+                new HBox(5, filterTextField, filterTypeComboBox));
+        // todo add combobox with = and !=.
         colNameWithFilterVBox.setPadding(new Insets(5));
+        VBox.setVgrow(colNameWithFilterVBox, Priority.ALWAYS);
+        HBox.setHgrow(filterTextField, Priority.ALWAYS);
+        HBox.setHgrow(filterTypeComboBox, Priority.NEVER);
+
         col.setGraphic(colNameWithFilterVBox);
-        return new Pair<>(col, colFilter);
+        return new Pair<>(col, filterTextField);
     }
 
     private Predicate<S> createPredicate(ColumnInfo<S, ?> columnInfo, String filterText) {

@@ -12,7 +12,7 @@ import javafx.stage.Stage;
 import java.io.IOException;
 import java.time.LocalDate;
 
-public class HelloApplication extends Application {
+public class TableViewApplication extends Application {
     public static void main(String[] args) {
         launch();
     }
@@ -30,7 +30,8 @@ public class HelloApplication extends Application {
                 new Person("Jane", "Smith", LocalDate.parse("1985-05-15")),
                 new Person("Mike", "Johnson", LocalDate.parse("2000-12-22"))
         );
-
+        // todo добавить возможность создавать колонки с шириной
+        // todo добавить возможность создавать вложенные колонки
         var tableView = TableViewBuilder.<Person>builder()
                 .addColumn("FirstName", ColumnType.STRING, Person::firstNameProperty)
                 .addColumn("LastName", ColumnType.STRING, Person::lastNameProperty)
