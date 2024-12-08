@@ -108,4 +108,8 @@ public class ComboButton<T> extends Button {
     public ReadOnlyObjectProperty<T> valueProperty() {
         return listView.getSelectionModel().selectedItemProperty();
     }
+
+    public T getValue() {
+        return valueProperty().getValue();
+    }
 }

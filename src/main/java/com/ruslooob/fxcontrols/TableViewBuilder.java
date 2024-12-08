@@ -20,18 +20,16 @@ import javafx.scene.layout.VBox;
 import javafx.util.StringConverter;
 
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
 import java.util.*;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
+import static com.ruslooob.fxcontrols.Utils.dateFormatter;
+
 @SuppressWarnings("unchecked")
 public class TableViewBuilder<S> {
-    private static final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("MM.dd.yyyy");
     // метаданные колонок, из которых потом будут строиться колонка с умными фильтрами
-    // todo think to create Map<colName, ColInfo> for fast lookup
-    private List<ColumnInfo<S, ?>> columnInfos = new ArrayList<>();
+    private Map<String, ColumnInfo<S, ?>> colInfoByName = new LinkedHashMap<>();
     private ObservableList<S> items;
 
     public static <S> TableViewBuilder<S> builder() {
@@ -39,7 +37,7 @@ public class TableViewBuilder<S> {
     }
 
     public <T> TableViewBuilder<S> addColumn(String colName, ColumnType type, Function<S, Property<T>> propertyGetter) {
-        this.columnInfos.add(new ColumnInfo<>(colName, type, propertyGetter));
+        this.colInfoByName.put(colName, new ColumnInfo<>(colName, type, propertyGetter));
         return this;
     }
 
@@ -52,32 +50,54 @@ public class TableViewBuilder<S> {
         Map<String, AdvancedTextFilter<?>> filtersByName = new HashMap<>();
         //create columns
         List<TableColumn<S, ?>> columns = new ArrayList<>();
-        for (var columnInfo : columnInfos) {
+        for (var columnInfo : colInfoByName.values()) {
             var columnAndFilter = createColumnAndFilter(columnInfo);
             columns.add(columnAndFilter.first());
             filtersByName.put(columnInfo.columnName(), columnAndFilter.last());
         }
         //build predicate logic for filters
         var filteredData = new FilteredList<>(items, p -> true);
-        Map<String, Predicate<S>> predicateMap = new HashMap<>();
-        for (var columnInfo : columnInfos) {
+        Map<String, Predicate<?>> predicateMap = new HashMap<>();
+        for (var columnInfo : colInfoByName.values()) {
             AdvancedTextFilter<?> filterTextField = filtersByName.get(columnInfo.columnName());
-            // todo change predicate applying with new AdvancedTextFilter predicate
-            filterTextField.textProperty().addListener((obs, oldVal, newVal) -> {
-                predicateMap.put(columnInfo.columnName(), createPredicate(columnInfo, newVal));
-                filteredData.setPredicate(
-                        predicateMap.values().stream().reduce(Predicate::and).orElse(record -> true));
+            filterTextField.predicateProperty().addListener((obs, oldVal, newVal) -> {
+                predicateMap.put(columnInfo.columnName(), filterTextField.getPredicate());
+                filteredData.setPredicate(combinePredicates(predicateMap));
             });
         }
 
         var tableView = new TableView<S>();
         tableView.getColumns().addAll(columns);
-        // build sorting logic
+        //build sorting logic
         var sortedData = new SortedList<>(filteredData);
         sortedData.comparatorProperty().bind(tableView.comparatorProperty());
         tableView.setItems(sortedData);
 
         return tableView;
+    }
+
+    /**
+     * Создает один предикат на основе всех фильтров-предикатов в колонках таблицы
+     */
+    private Predicate<S> combinePredicates(Map<String, Predicate<?>> predicateMap) {
+        Predicate<S> resPredicate = p -> true;
+
+        for (Map.Entry<String, Predicate<?>> predicateEntry : predicateMap.entrySet()) {
+            String colName = predicateEntry.getKey();
+            Predicate<?> filterPredicate = predicateEntry.getValue();
+            Function<S, ? extends Property<?>> propertyGetter = colInfoByName.get(colName).propertyGetter();
+            Predicate<S> predicate = record -> {
+                Property<?> property = propertyGetter.apply(record);
+                if (property == null) {
+                    return false;
+                }
+                Object value = property.getValue();
+                return ((Predicate<Object>) filterPredicate).test(value);
+            };
+            resPredicate = resPredicate.and(predicate);
+        }
+
+        return resPredicate;
     }
 
     private <T> Pair<TableColumn<S, T>, AdvancedTextFilter<?>> createColumnAndFilter(ColumnInfo<S, T> columnInfo) {
@@ -101,7 +121,6 @@ public class TableViewBuilder<S> {
         }
 
         AdvancedTextFilter<?> filterTextField = createFilter(columnInfo.columnType());
-
         var colNameWithFilterVBox = new VBox(new Label(colName), filterTextField);
         colNameWithFilterVBox.setPadding(new Insets(5));
         VBox.setVgrow(colNameWithFilterVBox, Priority.ALWAYS);
@@ -112,52 +131,19 @@ public class TableViewBuilder<S> {
     }
 
     private static AdvancedTextFilter<?> createFilter(ColumnType type) {
-        AdvancedTextFilter<?> filterTextField;
         switch (type) {
             case STRING -> {
-                filterTextField = new AdvancedTextFilter<String>();
+                var filterTextField = new AdvancedTextFilter<String>();
                 filterTextField.setFilterTypes(List.of(new SubstringFilterType(), new EqualsFilterType(), new StartsWithFilterType()));
+                return filterTextField;
             }
             case DATE -> {
-                filterTextField = new AdvancedTextFilter<LocalDate>();
+                var filterTextField = new AdvancedTextFilter<LocalDate>();
                 filterTextField.setFilterTypes(List.of(new DateEqualsFilter()));
+                return filterTextField;
             }
-            default -> throw new IllegalArgumentException("unknown column type %s".formatted(type));
+            default -> throw new IllegalArgumentException("Unknown column type %s".formatted(type));
         }
-        return filterTextField;
     }
 
-    private Predicate<S> createPredicate(ColumnInfo<S, ?> columnInfo, String filterText) {
-        if (filterText.isBlank()) {
-            return record -> true;
-        }
-        var propertyGetter = columnInfo.propertyGetter();
-        switch (columnInfo.columnType()) {
-            case STRING -> {
-                return record -> {
-                    var cellValue = propertyGetter.apply(record).getValue();
-                    if (cellValue == null) {
-                        return false;
-                    }
-                    return cellValue.toString().toLowerCase(Locale.ROOT).contains(filterText.toLowerCase(Locale.ROOT));
-                };
-            }
-            case DATE -> {
-                return record -> {
-                    var cellValue = propertyGetter.apply(record).getValue();
-                    if (cellValue == null) {
-                        return false;
-                    }
-                    LocalDate filterDate;
-                    try {
-                        filterDate = LocalDate.parse(filterText, dateFormatter);
-                    } catch (DateTimeParseException e) {
-                        return false;
-                    }
-                    return cellValue.equals(filterDate);
-                };
-            }
-            default -> throw new IllegalArgumentException("Unsupported column type: " + columnInfo.columnType());
-        }
-    }
 }
