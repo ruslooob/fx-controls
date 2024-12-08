@@ -1,11 +1,18 @@
 package com.ruslooob.fxcontrols;
 
+import com.ruslooob.fxcontrols.controls.AdvancedTextFilter;
+import com.ruslooob.fxcontrols.filters.date.DateEqualsFilter;
+import com.ruslooob.fxcontrols.filters.string.EqualsFilterType;
+import com.ruslooob.fxcontrols.filters.string.StartsWithFilterType;
+import com.ruslooob.fxcontrols.filters.string.SubstringFilterType;
 import javafx.beans.property.Property;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import javafx.collections.transformation.SortedList;
 import javafx.geometry.Insets;
-import javafx.scene.control.*;
+import javafx.scene.control.Label;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
 import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
@@ -23,6 +30,7 @@ import java.util.function.Predicate;
 public class TableViewBuilder<S> {
     private static final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("MM.dd.yyyy");
     // метаданные колонок, из которых потом будут строиться колонка с умными фильтрами
+    // todo think to create Map<colName, ColInfo> for fast lookup
     private List<ColumnInfo<S, ?>> columnInfos = new ArrayList<>();
     private ObservableList<S> items;
 
@@ -41,7 +49,7 @@ public class TableViewBuilder<S> {
     }
 
     public TableView<S> build() {
-        Map<String, TextField> filtersByName = new HashMap<>();
+        Map<String, AdvancedTextFilter<?>> filtersByName = new HashMap<>();
         //create columns
         List<TableColumn<S, ?>> columns = new ArrayList<>();
         for (var columnInfo : columnInfos) {
@@ -53,9 +61,8 @@ public class TableViewBuilder<S> {
         var filteredData = new FilteredList<>(items, p -> true);
         Map<String, Predicate<S>> predicateMap = new HashMap<>();
         for (var columnInfo : columnInfos) {
-            TextField filterTextField = filtersByName.get(columnInfo.columnName());
-            // todo каждый раз когда меняется текст, меняется и предикат
-            // todo каждый раз, когда меняется и тип фильтра, предикат тоже должен меняться
+            AdvancedTextFilter<?> filterTextField = filtersByName.get(columnInfo.columnName());
+            // todo change predicate applying with new AdvancedTextFilter predicate
             filterTextField.textProperty().addListener((obs, oldVal, newVal) -> {
                 predicateMap.put(columnInfo.columnName(), createPredicate(columnInfo, newVal));
                 filteredData.setPredicate(
@@ -73,11 +80,10 @@ public class TableViewBuilder<S> {
         return tableView;
     }
 
-    private <T> Pair<TableColumn<S, T>, TextField> createColumnAndFilter(ColumnInfo<S, T> columnInfo) {
+    private <T> Pair<TableColumn<S, T>, AdvancedTextFilter<?>> createColumnAndFilter(ColumnInfo<S, T> columnInfo) {
         var col = new TableColumn<S, T>();
         col.setPrefWidth(200);
         String colName = columnInfo.columnName();
-        col.setId(colName);
         col.setCellValueFactory(cellData -> columnInfo.propertyGetter().apply(cellData.getValue()));
 
         if (columnInfo.columnType() == ColumnType.DATE) {
@@ -94,25 +100,31 @@ public class TableViewBuilder<S> {
             }));
         }
 
-        var filterTextField = new TextField();
-        filterTextField.setId(colName + "-tf");
+        AdvancedTextFilter<?> filterTextField = createFilter(columnInfo.columnType());
 
-        var filterTypeComboBox = new ComboBox<String>();
-        filterTypeComboBox.getItems().addAll("=", "!=");
-        filterTypeComboBox.setValue("=");
-        filterTypeComboBox.getStyleClass().add("button-combo-box");
-
-        var colNameWithFilterVBox = new VBox(
-                new Label(colName),
-                new HBox(5, filterTextField, filterTypeComboBox));
-        // todo add combobox with = and !=.
+        var colNameWithFilterVBox = new VBox(new Label(colName), filterTextField);
         colNameWithFilterVBox.setPadding(new Insets(5));
         VBox.setVgrow(colNameWithFilterVBox, Priority.ALWAYS);
         HBox.setHgrow(filterTextField, Priority.ALWAYS);
-        HBox.setHgrow(filterTypeComboBox, Priority.NEVER);
 
         col.setGraphic(colNameWithFilterVBox);
         return new Pair<>(col, filterTextField);
+    }
+
+    private static AdvancedTextFilter<?> createFilter(ColumnType type) {
+        AdvancedTextFilter<?> filterTextField;
+        switch (type) {
+            case STRING -> {
+                filterTextField = new AdvancedTextFilter<String>();
+                filterTextField.setFilterTypes(List.of(new SubstringFilterType(), new EqualsFilterType(), new StartsWithFilterType()));
+            }
+            case DATE -> {
+                filterTextField = new AdvancedTextFilter<LocalDate>();
+                filterTextField.setFilterTypes(List.of(new DateEqualsFilter()));
+            }
+            default -> throw new IllegalArgumentException("unknown column type %s".formatted(type));
+        }
+        return filterTextField;
     }
 
     private Predicate<S> createPredicate(ColumnInfo<S, ?> columnInfo, String filterText) {

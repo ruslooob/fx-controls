@@ -1,33 +1,39 @@
 package com.ruslooob.fxcontrols.controls;
 
 import javafx.beans.binding.Bindings;
+import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ReadOnlyObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
+import javafx.collections.ListChangeListener;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.stage.Popup;
+import lombok.AccessLevel;
+import lombok.experimental.FieldDefaults;
 
 import java.util.List;
 import java.util.function.Function;
 
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class ComboButton<T> extends Button {
-    private static final int CELL_SIZE = 30;
-    private static final int MAX_HEIGHT_CELLS_COUNT = 4;
+    static int CELL_SIZE = 30;
+    static int MAX_HEIGHT_CELLS_COUNT = 4;
+    // todo add autohide if user clicks to another place
 
-    private final Popup popup = new Popup();
-    private final ListView<T> listView = new ListView<>();
+    Popup popup = new Popup();
+    ListView<T> listView = new ListView<>();
 
-    private Function<T, String> cellConverter = Object::toString;
+    ObjectProperty<Function<T, String>> cellConverterProperty = new SimpleObjectProperty<>(Object::toString);
 
     public ComboButton() {
-        setPrefWidth(50);
-
+        setMinWidth(50);
         listView.setFixedCellSize(CELL_SIZE);
         listView.setMaxHeight((CELL_SIZE + 1) * MAX_HEIGHT_CELLS_COUNT);
         listView.prefHeightProperty().bind(listView.fixedCellSizeProperty().multiply(Bindings.size(listView.getItems())).add(5));
 
-        listView.prefWidthProperty().bind(prefWidthProperty());
+        listView.prefWidthProperty().bind(widthProperty());
         popup.getContent().add(listView);
 
         listView.setCellFactory(lv -> {
@@ -39,7 +45,7 @@ public class ComboButton<T> extends Button {
                         setText(null);
                         setGraphic(null);
                     } else {
-                        setText(cellConverter.apply(item));
+                        setText(getCellConverter().apply(item));
                     }
                 }
             };
@@ -62,22 +68,41 @@ public class ComboButton<T> extends Button {
         listView.setOnMouseClicked(event -> {
             T selectedItem = listView.getSelectionModel().getSelectedItem();
             if (selectedItem != null) {
-                setText(cellConverter.apply(selectedItem));
+                setText(getCellConverter().apply(selectedItem));
                 popup.hide();
             }
         });
+
+        //update selected item while cellConverterProperty has changed
+        cellConverterProperty.addListener((obs, oldVal, newVal) -> {
+            setText(newVal.apply(listView.getSelectionModel().getSelectedItem() == null
+                    ? listView.getItems().get(0)
+                    : listView.getSelectionModel().getSelectedItem()));
+        });
+    }
+
+    public Function<T, String> getCellConverter() {
+        return cellConverterProperty.get();
     }
 
     public void setValue(T value) {
-        setText(cellConverter.apply(value));
+        setText(getCellConverter().apply(value));
     }
 
+    /**
+     * Вставляет фильтры в меню выбора, а также выбирает первый элемент в списке в качестве выбранного
+     */
     public void setItems(List<T> values) {
+        if (values == null || values.isEmpty()) {
+            throw new IllegalArgumentException("Некорректное значение элементов для ComboButton: %s".formatted(values));
+        }
         listView.getItems().setAll(values);
+        setValue(values.get(0));
+        listView.getSelectionModel().selectFirst();
     }
-    // fixme cellConverter not applying if setValue called before
-    public void setCellConverter(Function<T, String> cellConverter) {
-        this.cellConverter = cellConverter;
+
+    public void setCellConverterProperty(Function<T, String> cellConverterProperty) {
+        this.cellConverterProperty.setValue(cellConverterProperty);
     }
 
     public ReadOnlyObjectProperty<T> valueProperty() {

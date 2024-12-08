@@ -17,11 +17,10 @@ public class ComboButtonApplication extends Application {
         }
         ;
         ComboButton<Filter> comboButton = new ComboButton<>();
-        comboButton.setPrefWidth(100);
-        List<Filter> values = List.of(new Filter("1", "="), new Filter("1", "!="), new Filter("1", "..."));
+        comboButton.setPrefWidth(50);
+        List<Filter> values = List.of(new Filter("1", "="), new Filter("2", "!="), new Filter("3", "..."));
         comboButton.setItems(values);
-        comboButton.setCellConverter(f -> f.name);
-        comboButton.setValue(values.get(0));
+        comboButton.setCellConverterProperty(f -> f.name);
         comboButton.valueProperty().addListener((obs, oldVal, newVal) -> {
             System.out.println(newVal);
         });
