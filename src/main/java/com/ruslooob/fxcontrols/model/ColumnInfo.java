@@ -1,5 +1,6 @@
-package com.ruslooob.fxcontrols;
+package com.ruslooob.fxcontrols.model;
 
+import com.ruslooob.fxcontrols.enums.ColumnType;
 import javafx.beans.property.Property;
 import javafx.scene.control.TableColumn;
 import lombok.AccessLevel;

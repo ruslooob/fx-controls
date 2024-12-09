@@ -1,10 +1,10 @@
 package com.ruslooob.fxcontrols.filters;
 
-import com.ruslooob.fxcontrols.filters.bool.FalseFilter;
-import com.ruslooob.fxcontrols.filters.bool.TrueFilter;
 import com.ruslooob.fxcontrols.filters.date.DateAfterFilter;
 import com.ruslooob.fxcontrols.filters.date.DateBeforeFilter;
 import com.ruslooob.fxcontrols.filters.date.DateEqualsFilter;
+import com.ruslooob.fxcontrols.filters.enumeration.AllIncludeEnumFilter;
+import com.ruslooob.fxcontrols.filters.enumeration.EnumFilter;
 import com.ruslooob.fxcontrols.filters.number.NumberAfterFilter;
 import com.ruslooob.fxcontrols.filters.number.NumberBeforeFilter;
 import com.ruslooob.fxcontrols.filters.number.NumberEqualsFilter;
@@ -17,8 +17,8 @@ import java.util.function.Predicate;
 
 public sealed abstract class TextFilterType<T> permits SubstringFilterType, StartsWithFilterType, EqualsFilterType,
         DateEqualsFilter, DateBeforeFilter, DateAfterFilter,
-        TrueFilter, FalseFilter,
-        NumberEqualsFilter, NumberBeforeFilter, NumberAfterFilter {
+        NumberEqualsFilter, NumberBeforeFilter, NumberAfterFilter,
+        EnumFilter, AllIncludeEnumFilter {
     public abstract Function<String, Predicate<T>> createSearchFunction();
 
     public abstract String toString();

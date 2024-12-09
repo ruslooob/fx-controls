@@ -1,5 +1,7 @@
 package com.ruslooob.fxcontrols;
 
+import com.ruslooob.fxcontrols.controls.TableViewBuilder;
+import com.ruslooob.fxcontrols.enums.ColumnType;
 import javafx.application.Application;
 import javafx.beans.property.Property;
 import javafx.collections.FXCollections;
@@ -7,6 +9,7 @@ import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.layout.VBox;
@@ -15,9 +18,12 @@ import javafx.util.StringConverter;
 
 import java.io.IOException;
 import java.time.LocalDate;
+import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.function.Function;
 
+import static com.ruslooob.fxcontrols.enums.PropType.ENUM_FILTER_TYPES;
 import static com.ruslooob.fxcontrols.Utils.dateFormatter;
 
 public class TableViewApplication extends Application {
@@ -36,9 +42,9 @@ public class TableViewApplication extends Application {
     @Override
     public void start(Stage stage) throws IOException, InterruptedException {
         ObservableList<Person> data = FXCollections.observableArrayList(
-                new Person("John", "Doe", 176, LocalDate.parse("1990-01-01"), true),
-                new Person("Jane", "Smith", 180, LocalDate.parse("1985-05-15"), false),
-                new Person("Mike", "Johnson", 190, LocalDate.parse("2000-12-22"), true)
+                new Person("John", "Doe", 176, LocalDate.parse("1990-01-01"), true, "М"),
+                new Person("Jane", "Smith", 180, LocalDate.parse("1985-05-15"), false, "Ж"),
+                new Person("Mike", "Johnson", 190, LocalDate.parse("2000-12-22"), true, "М")
         );
         TableColumn<Person, String> firstNameCol = createTableColumn("First Name", Person::firstNameProperty);
         TableColumn<Person, String> lastNameCol = createTableColumn("Last Name", Person::lastNameProperty);
@@ -58,7 +64,20 @@ public class TableViewApplication extends Application {
         }));
 
         TableColumn<Person, Boolean> isEmployedCol = createTableColumn("Is Employed", Person::isEmployedProperty);
+        isEmployedCol.setCellFactory(column -> new TableCell<>() {
+            @Override
+            protected void updateItem(Boolean isEmployed, boolean empty) {
+                super.updateItem(isEmployed, empty);
+                if (empty || isEmployed == null) {
+                    setText(null);
+                } else {
+                    setText(isEmployed ? "Да" : "Нет");
+                }
+            }
+        });
+        TableColumn<Person, String> genderCol = createTableColumn("Gender", Person::genderProperty);
 
+        List<String> genders = List.of("М", "Ж", "Undefined");
         var tableView = TableViewBuilder.<Person>builder()
                 .addRowNumColumn()
                 .addColumn(firstNameCol, ColumnType.STRING)
@@ -66,6 +85,7 @@ public class TableViewApplication extends Application {
                 .addColumn(heightCol, ColumnType.NUMBER)
                 .addColumn(dateOfBirthCol, ColumnType.DATE)
                 .addColumn(isEmployedCol, ColumnType.BOOL)
+                .addColumn(genderCol, ColumnType.ENUM, Map.of(ENUM_FILTER_TYPES, genders))
                 .items(data)
                 .build();
 
@@ -76,7 +96,9 @@ public class TableViewApplication extends Application {
                     "Surname" + random.nextInt(100),
                     random.nextInt(150, 210),
                     nextDate(),
-                    random.nextBoolean());
+                    random.nextBoolean(),
+                    nextElem(genders)
+            );
             data.add(randomPerson);
 //            tableView.refresh();
         });
@@ -104,5 +126,9 @@ public class TableViewApplication extends Application {
         int maxDay = (int) maxDate.toEpochDay();
         long randomDay = minDay + random.nextInt(maxDay - minDay);
         return LocalDate.ofEpochDay(randomDay);
+    }
+
+    private static <T> T nextElem(List<T> list) {
+        return list.get(random.nextInt(list.size()));
     }
 }

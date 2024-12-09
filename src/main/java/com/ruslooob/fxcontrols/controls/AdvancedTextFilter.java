@@ -13,6 +13,8 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
+import static com.ruslooob.fxcontrols.Utils.addBorder;
+
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class AdvancedTextFilter<T> extends HBox {
     TextField textField = new TextField();
@@ -20,6 +22,7 @@ public class AdvancedTextFilter<T> extends HBox {
     ObjectProperty<Predicate<T>> predicateProperty = new SimpleObjectProperty<>(s -> true);
 
     public AdvancedTextFilter() {
+        addBorder(this);
         getChildren().addAll(changeTypeComboButton, textField);
         //change predicate every time filter type was changed
         changeTypeComboButton.valueProperty().addListener((obs, oldVal, newVal) -> {
@@ -33,8 +36,9 @@ public class AdvancedTextFilter<T> extends HBox {
         });
     }
 
-    public void setFilterTypes(List<TextFilterType<T>> filterTypes) {
-        this.changeTypeComboButton.setItems(filterTypes);
+    @SuppressWarnings("unchecked")
+    public void setFilterTypes(List<? extends TextFilterType<T>> filterTypes) {
+        this.changeTypeComboButton.setItems((List<TextFilterType<T>>) filterTypes);
         this.changeTypeComboButton.setCellConverter(TextFilterType::toString);
         this.changeTypeComboButton.setCellTooltipConverter(TextFilterType::getTooltipText);
     }
@@ -56,6 +60,12 @@ public class AdvancedTextFilter<T> extends HBox {
     }
 
     public void setTextFilterVisible(boolean visibility) {
-        this.textField.setManaged(visibility);
+        if (visibility) {
+            getChildren().setAll(changeTypeComboButton, textField);
+            changeTypeComboButton.setPrefWidth(USE_COMPUTED_SIZE);
+        } else {
+            getChildren().setAll(changeTypeComboButton);
+            changeTypeComboButton.setPrefWidth(Integer.MAX_VALUE);
+        }
     }
 }

@@ -5,9 +5,10 @@ module com.ruslooob.fxcontrols {
     requires org.kordamp.ikonli.fontawesome5;
     requires static lombok;
 
-    opens com.ruslooob.fxcontrols to javafx.fxml;
-    exports com.ruslooob.fxcontrols;
     exports com.ruslooob.fxcontrols.filters;
     exports com.ruslooob.fxcontrols.filters.string;
     exports com.ruslooob.fxcontrols.filters.date;
+    exports com.ruslooob.fxcontrols.enums;
+    exports com.ruslooob.fxcontrols.model;
+    exports com.ruslooob.fxcontrols.controls;
 }

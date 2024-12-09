@@ -22,8 +22,8 @@ public class ComboButton<T> extends Button {
     static int MAX_HEIGHT_CELLS_COUNT = 4;
 
     Popup popup = new Popup();
+    //todo add enter to submit current selection
     ListView<T> listView = new ListView<>();
-    //todo add cellTooltipConverterProperty для всплывающих подсказок
     ObjectProperty<Function<T, String>> cellConverterProperty = new SimpleObjectProperty<>(Object::toString);
     //todo add tooltip on current selected item
     ObjectProperty<Function<T, String>> cellTooltipConverterProperty = new SimpleObjectProperty<>(Object::toString);
@@ -33,7 +33,7 @@ public class ComboButton<T> extends Button {
         popup.setAutoHide(true);
         listView.setFixedCellSize(CELL_SIZE);
         listView.setMaxHeight((CELL_SIZE + 1) * MAX_HEIGHT_CELLS_COUNT);
-        listView.prefHeightProperty().bind(listView.fixedCellSizeProperty().multiply(Bindings.size(listView.getItems())).add(15));
+        listView.prefHeightProperty().bind(listView.fixedCellSizeProperty().multiply(Bindings.size(listView.getItems())).add(5));
 
         listView.prefWidthProperty().bind(widthProperty());
         popup.getContent().add(listView);
@@ -48,7 +48,11 @@ public class ComboButton<T> extends Button {
                         setGraphic(null);
                     } else {
                         setText(getCellConverter().apply(item));
-                        setTooltip(new Tooltip(getCellTooltipConverter().apply(item)));
+
+                        String tooltipText = getCellTooltipConverter().apply(item);
+                        if (!tooltipText.isBlank()) {
+                            setTooltip(new Tooltip(tooltipText));
+                        }
                     }
                 }
             };

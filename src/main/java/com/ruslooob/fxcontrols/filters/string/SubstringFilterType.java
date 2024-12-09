@@ -6,6 +6,7 @@ import java.util.Locale;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
+// todo add regex search filter
 public final class SubstringFilterType extends TextFilterType<String> {
     @Override
     public Function<String, Predicate<String>> createSearchFunction() {
@@ -19,6 +20,6 @@ public final class SubstringFilterType extends TextFilterType<String> {
 
     @Override
     public String getTooltipText() {
-        return "Оканчивается на";
+        return "Содержит";
     }
 }

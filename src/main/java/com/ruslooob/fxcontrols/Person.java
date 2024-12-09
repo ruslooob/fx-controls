@@ -11,13 +11,15 @@ public class Person {
     private final IntegerProperty height;
     private final ObjectProperty<LocalDate> dateOfBirth;
     private final BooleanProperty isEmployed;
+    private final StringProperty gender;
 
-    public Person(String firstName, String lastName, Integer height, LocalDate dateOfBirth, boolean isEmployed) {
+    public Person(String firstName, String lastName, Integer height, LocalDate dateOfBirth, boolean isEmployed, String gender) {
         this.firstName = new SimpleStringProperty(firstName);
         this.lastName = new SimpleStringProperty(lastName);
         this.height = new SimpleIntegerProperty(height);
         this.dateOfBirth = new SimpleObjectProperty<>(dateOfBirth);
         this.isEmployed = new SimpleBooleanProperty(isEmployed);
+        this.gender = new SimpleStringProperty(gender);
     }
 
     public StringProperty firstNameProperty() {
@@ -52,12 +54,20 @@ public class Person {
         return dateOfBirth.get();
     }
 
-    public boolean getIsEmployed() {
+    public boolean isEmployed() {
         return isEmployed.get();
     }
 
     public BooleanProperty isEmployedProperty() {
         return isEmployed;
+    }
+
+    public StringProperty genderProperty() {
+        return gender;
+    }
+
+    public String getGender() {
+        return gender.get();
     }
 
     @Override
