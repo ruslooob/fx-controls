@@ -21,6 +21,8 @@ import java.util.function.Function;
 import static com.ruslooob.fxcontrols.Utils.dateFormatter;
 
 public class TableViewApplication extends Application {
+    private static Random random = new Random();
+
     public static void main(String[] args) {
         launch();
     }
@@ -58,6 +60,7 @@ public class TableViewApplication extends Application {
         TableColumn<Person, Boolean> isEmployedCol = createTableColumn("Is Employed", Person::isEmployedProperty);
 
         var tableView = TableViewBuilder.<Person>builder()
+                .addRowNumColumn()
                 .addColumn(firstNameCol, ColumnType.STRING)
                 .addColumn(lastNameCol, ColumnType.STRING)
                 .addColumn(heightCol, ColumnType.NUMBER)
@@ -68,7 +71,13 @@ public class TableViewApplication extends Application {
 
         Button addButton = new Button("Add Person");
         addButton.setOnAction(event -> {
-            data.add(new Person("New", "Person", 190, LocalDate.now(), new Random().nextBoolean()));
+            Person randomPerson = new Person(
+                    "Name" + random.nextInt(100),
+                    "Surname" + random.nextInt(100),
+                    random.nextInt(150, 210),
+                    nextDate(),
+                    random.nextBoolean());
+            data.add(randomPerson);
 //            tableView.refresh();
         });
 
@@ -86,5 +95,14 @@ public class TableViewApplication extends Application {
         col.setPrefWidth(200);
         col.setCellValueFactory(cellData -> propertyGetter.apply(cellData.getValue()));
         return col;
+    }
+
+    private static LocalDate nextDate() {
+        LocalDate minDate = LocalDate.of(1950, 1, 1);
+        LocalDate maxDate = LocalDate.now();
+        int minDay = (int) minDate.toEpochDay();
+        int maxDay = (int) maxDate.toEpochDay();
+        long randomDay = minDay + random.nextInt(maxDay - minDay);
+        return LocalDate.ofEpochDay(randomDay);
     }
 }

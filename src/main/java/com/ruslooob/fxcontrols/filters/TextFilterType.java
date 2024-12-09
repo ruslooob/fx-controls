@@ -22,5 +22,9 @@ public sealed abstract class TextFilterType<T> permits SubstringFilterType, Star
     public abstract Function<String, Predicate<T>> createSearchFunction();
 
     public abstract String toString();
+
+    public String getTooltipText() {
+        return "";
+    }
 }
 

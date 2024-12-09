@@ -16,4 +16,9 @@ public final class StartsWithFilterType extends TextFilterType<String> {
     public String toString() {
         return "A...";
     }
+
+    @Override
+    public String getTooltipText() {
+        return "Начинается с";
+    }
 }

@@ -4,11 +4,11 @@ import javafx.beans.binding.Bindings;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
-import javafx.collections.ListChangeListener;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
+import javafx.scene.control.Tooltip;
 import javafx.stage.Popup;
 import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
@@ -20,12 +20,13 @@ import java.util.function.Function;
 public class ComboButton<T> extends Button {
     static int CELL_SIZE = 30;
     static int MAX_HEIGHT_CELLS_COUNT = 4;
-    // todo add tooltip on filters
 
     Popup popup = new Popup();
     ListView<T> listView = new ListView<>();
-
+    //todo add cellTooltipConverterProperty для всплывающих подсказок
     ObjectProperty<Function<T, String>> cellConverterProperty = new SimpleObjectProperty<>(Object::toString);
+    //todo add tooltip on current selected item
+    ObjectProperty<Function<T, String>> cellTooltipConverterProperty = new SimpleObjectProperty<>(Object::toString);
 
     public ComboButton() {
         setMinWidth(50);
@@ -47,6 +48,7 @@ public class ComboButton<T> extends Button {
                         setGraphic(null);
                     } else {
                         setText(getCellConverter().apply(item));
+                        setTooltip(new Tooltip(getCellTooltipConverter().apply(item)));
                     }
                 }
             };
@@ -86,6 +88,22 @@ public class ComboButton<T> extends Button {
         return cellConverterProperty.get();
     }
 
+    public void setCellConverter(Function<T, String> cellConverterProperty) {
+        this.cellConverterProperty.setValue(cellConverterProperty);
+    }
+
+    public void setCellTooltipConverter(Function<T, String> cellTooltipConverter) {
+        this.cellTooltipConverterProperty.setValue(cellTooltipConverter);
+    }
+
+    public Function<T, String> getCellTooltipConverter() {
+        return cellTooltipConverterProperty.get();
+    }
+
+    public ObjectProperty<Function<T, String>> cellTooltipConverterPropertyProperty() {
+        return cellTooltipConverterProperty;
+    }
+
     public void setValue(T value) {
         setText(getCellConverter().apply(value));
     }
@@ -100,10 +118,6 @@ public class ComboButton<T> extends Button {
         listView.getItems().setAll(values);
         setValue(values.get(0));
         listView.getSelectionModel().selectFirst();
-    }
-
-    public void setCellConverterProperty(Function<T, String> cellConverterProperty) {
-        this.cellConverterProperty.setValue(cellConverterProperty);
     }
 
     public ReadOnlyObjectProperty<T> valueProperty() {

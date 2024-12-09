@@ -6,7 +6,6 @@ import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.StringProperty;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
 import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
 
@@ -36,6 +35,8 @@ public class AdvancedTextFilter<T> extends HBox {
 
     public void setFilterTypes(List<TextFilterType<T>> filterTypes) {
         this.changeTypeComboButton.setItems(filterTypes);
+        this.changeTypeComboButton.setCellConverter(TextFilterType::toString);
+        this.changeTypeComboButton.setCellTooltipConverter(TextFilterType::getTooltipText);
     }
 
     public void setValue(TextFilterType<T> value) {

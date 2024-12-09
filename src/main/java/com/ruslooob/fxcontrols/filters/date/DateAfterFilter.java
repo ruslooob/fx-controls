@@ -30,4 +30,9 @@ public final class DateAfterFilter extends TextFilterType<LocalDate> {
     public String toString() {
         return ">";
     }
+
+    @Override
+    public String getTooltipText() {
+        return "Позже чем";
+    }
 }

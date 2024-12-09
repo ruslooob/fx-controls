@@ -16,4 +16,9 @@ public final class SubstringFilterType extends TextFilterType<String> {
     public String toString() {
         return "...А...";
     }
+
+    @Override
+    public String getTooltipText() {
+        return "Оканчивается на";
+    }
 }

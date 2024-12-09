@@ -15,4 +15,9 @@ public final class EqualsFilterType extends TextFilterType<String> {
     public String toString() {
         return "=";
     }
+
+    @Override
+    public String getTooltipText() {
+        return "Равно";
+    }
 }

@@ -20,7 +20,7 @@ public class ComboButtonApplication extends Application {
         comboButton.setPrefWidth(50);
         List<Filter> values = List.of(new Filter("1", "="), new Filter("2", "!="), new Filter("3", "..."));
         comboButton.setItems(values);
-        comboButton.setCellConverterProperty(f -> f.name);
+        comboButton.setCellConverter(f -> f.name);
         comboButton.valueProperty().addListener((obs, oldVal, newVal) -> {
             System.out.println(newVal);
         });

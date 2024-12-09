@@ -13,6 +13,7 @@ import com.ruslooob.fxcontrols.filters.string.EqualsFilterType;
 import com.ruslooob.fxcontrols.filters.string.StartsWithFilterType;
 import com.ruslooob.fxcontrols.filters.string.SubstringFilterType;
 import javafx.beans.property.Property;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import javafx.collections.transformation.SortedList;
@@ -20,7 +21,6 @@ import javafx.geometry.Insets;
 import javafx.scene.control.Label;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
-import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 
@@ -33,6 +33,7 @@ import java.util.function.Predicate;
 public class TableViewBuilder<S> {
     // метаданные колонок, из которых потом будут строиться колонка с умными фильтрами
     private Map<String, ColumnInfo<S, ?>> colInfoByName = new LinkedHashMap<>();
+    private boolean enableRowNumCol = false;
     private ObservableList<S> items;
 
     public static <S> TableViewBuilder<S> builder() {
@@ -47,6 +48,11 @@ public class TableViewBuilder<S> {
 
     public TableViewBuilder<S> items(ObservableList<S> items) {
         this.items = items;
+        return this;
+    }
+
+    public TableViewBuilder<S> addRowNumColumn() {
+        this.enableRowNumCol = true;
         return this;
     }
 
@@ -71,7 +77,17 @@ public class TableViewBuilder<S> {
         }
 
         var tableView = new TableView<S>();
+        if (enableRowNumCol) {
+            TableColumn<S, Integer> numCol = new TableColumn<>("№");
+            numCol.setCellValueFactory(cellData -> {
+                int index = tableView.getItems().indexOf(cellData.getValue()) + 1;
+                return new SimpleObjectProperty<>(index);
+            });
+            numCol.setSortable(false);
+            columns.add(0, numCol);
+        }
         tableView.getColumns().addAll(columns);
+
         //build sorting logic
         var sortedData = new SortedList<>(filteredData);
         sortedData.comparatorProperty().bind(tableView.comparatorProperty());
@@ -115,7 +131,7 @@ public class TableViewBuilder<S> {
         col.setGraphic(colNameWithFilterVBox);
         return new Pair<>(col, filterTextField);
     }
-
+    //todo add borders for debug purposes
     private static AdvancedTextFilter<?> createFilter(ColumnType type) {
         switch (type) {
             case STRING -> {
@@ -129,7 +145,7 @@ public class TableViewBuilder<S> {
                 return filterTextField;
             }
             case BOOL -> {
-                //todo поправить отображение фильтра на более красивое
+                //todo поправить отображение фильтра на более красивое. Займусь серьезнее, когда добавлю тип колонки enum
                 // сделать сброс фильтра
                 var filterTextField = new AdvancedTextFilter<Boolean>();
                 filterTextField.setTextFilterVisible(false);
@@ -138,7 +154,7 @@ public class TableViewBuilder<S> {
                 return filterTextField;
             }
             case DATE -> {
-                //todo add dateControl
+                //todo add dateControl for user input
                 var filterTextField = new AdvancedTextFilter<LocalDate>();
                 filterTextField.setFilterTypes(List.of(new DateEqualsFilter(), new DateBeforeFilter(), new DateAfterFilter()));
                 return filterTextField;
