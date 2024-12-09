@@ -37,6 +37,8 @@ import static com.ruslooob.fxcontrols.enums.PropType.BOOLEAN_TYPES;
 import static com.ruslooob.fxcontrols.enums.PropType.ENUM_FILTER_TYPES;
 
 @SuppressWarnings("unchecked")
+//todo add clear all filters button
+//todo add actions button via additional first column. Available actions: export to csv, clear all filters, show/hide columns
 public class TableViewBuilder<S> {
     private static final String DEFAULT_BOOL_TRUE_STR = "ДА";
     private static final String DEFAULT_BOOL_FALSE_STR = "Нет";
@@ -124,7 +126,6 @@ public class TableViewBuilder<S> {
         return new Pair<>(col, filterTextField);
     }
 
-    //todo add borders for debug purposes
     private AdvancedTextFilter<?> createFilter(ColumnType type, Map<PropType, Object> colProps) {
         switch (type) {
             case STRING -> {
@@ -157,7 +158,7 @@ public class TableViewBuilder<S> {
                 return filterTextField;
             }
             case DATE -> {
-                //todo add dateControl for user input
+                //todo add datePicker for user input
                 var filterTextField = new AdvancedTextFilter<LocalDate>();
                 filterTextField.setFilterTypes(List.of(new DateEqualsFilter(), new DateBeforeFilter(), new DateAfterFilter()));
                 return filterTextField;
@@ -186,12 +187,12 @@ public class TableViewBuilder<S> {
      */
     private Predicate<S> combinePredicates(Map<String, Predicate<?>> predicateMap) {
         Predicate<S> resPredicate = p -> true;
-        // у нас есть boolean-поле, которое получилось в ходе применения propertyGetter замапить это на новый предикат, который будет принимать булеан и возвращать строку
         for (Map.Entry<String, Predicate<?>> predicateEntry : predicateMap.entrySet()) {
             String colName = predicateEntry.getKey();
             Predicate<?> filterPredicate = predicateEntry.getValue();
             ColumnInfo<S, ?> colInfo = colInfoByName.get(colName);
             Function<S, ? extends Property<?>> propertyGetter = colInfo.getPropertyGetter();
+            // convert table column predicate to generic Predicate<S>
             Predicate<S> predicate = record -> {
                 Property<?> property = propertyGetter.apply(record);
                 if (property == null) {
@@ -201,6 +202,7 @@ public class TableViewBuilder<S> {
                 if (colInfo.getType() != ColumnType.BOOL) {
                     return ((Predicate<Object>) filterPredicate).test(value);
                 } else {
+                    // т.к ColumnType.BOOL реализован через ENUM, то нам нужно преобразовать boolean в String
                     return ((Predicate<Object>) filterPredicate).test(mapBoolToString((boolean) value, props.getOrDefault(colName, new HashMap<>())));
                 }
             };

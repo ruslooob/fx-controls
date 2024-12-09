@@ -1,11 +1,13 @@
 package com.ruslooob.fxcontrols.controls;
 
 import com.ruslooob.fxcontrols.filters.TextFilterType;
+import javafx.animation.PauseTransition;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.StringProperty;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.HBox;
+import javafx.util.Duration;
 import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
 
@@ -17,6 +19,8 @@ import static com.ruslooob.fxcontrols.Utils.addBorder;
 
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class AdvancedTextFilter<T> extends HBox {
+    PauseTransition debouncePause = new PauseTransition(Duration.millis(250));
+    //todo add clear button
     TextField textField = new TextField();
     ComboButton<TextFilterType<T>> changeTypeComboButton = new ComboButton<>();
     ObjectProperty<Predicate<T>> predicateProperty = new SimpleObjectProperty<>(s -> true);
@@ -31,8 +35,11 @@ public class AdvancedTextFilter<T> extends HBox {
         });
         //also change predicate every time text in filter was changed
         textField.textProperty().addListener((obs, oldVal, newVal) -> {
-            Function<String, Predicate<T>> searchFunction = changeTypeComboButton.getValue().createSearchFunction();
-            predicateProperty.setValue(searchFunction.apply(newVal));
+            debouncePause.setOnFinished(event -> {
+                Function<String, Predicate<T>> searchFunction = changeTypeComboButton.getValue().createSearchFunction();
+                predicateProperty.setValue(searchFunction.apply(newVal));
+            });
+            debouncePause.playFromStart();
         });
     }
 

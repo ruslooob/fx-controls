@@ -1,9 +1,12 @@
 module com.ruslooob.fxcontrols {
     requires javafx.controls;
     requires jdk.jshell;
+    requires javafx.graphics;
     requires org.kordamp.ikonli.core;
     requires org.kordamp.ikonli.fontawesome5;
     requires static lombok;
+
+    exports com.ruslooob.fxcontrols to javafx.graphics;
 
     exports com.ruslooob.fxcontrols.filters;
     exports com.ruslooob.fxcontrols.filters.string;

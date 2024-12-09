@@ -4,7 +4,6 @@ import com.ruslooob.fxcontrols.controls.TableViewBuilder;
 import com.ruslooob.fxcontrols.enums.ColumnType;
 import javafx.application.Application;
 import javafx.beans.property.Property;
-import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
@@ -23,29 +22,26 @@ import java.util.Map;
 import java.util.Random;
 import java.util.function.Function;
 
-import static com.ruslooob.fxcontrols.enums.PropType.ENUM_FILTER_TYPES;
 import static com.ruslooob.fxcontrols.Utils.dateFormatter;
+import static com.ruslooob.fxcontrols.enums.PropType.ENUM_FILTER_TYPES;
+import static javafx.collections.FXCollections.observableArrayList;
 
 public class TableViewApplication extends Application {
     private static Random random = new Random();
+    private static List<String> genders = List.of("М", "Ж", "Undefined");
 
     public static void main(String[] args) {
         launch();
     }
 
-    /*
-    Все предикаты должны стакаться
-    * колонки могут быть с типом данных: строка, число, дата, (custom)
-    * со строками мы можем делать поиск по паттерну %substring% (ignorecase)
-    * с числами мы можем приводить такие операции > < = <>
-    * */
     @Override
-    public void start(Stage stage) throws IOException, InterruptedException {
-        ObservableList<Person> data = FXCollections.observableArrayList(
-                new Person("John", "Doe", 176, LocalDate.parse("1990-01-01"), true, "М"),
-                new Person("Jane", "Smith", 180, LocalDate.parse("1985-05-15"), false, "Ж"),
-                new Person("Mike", "Johnson", 190, LocalDate.parse("2000-12-22"), true, "М")
-        );
+    public void start(Stage stage) {
+
+        ObservableList<Person> data = observableArrayList();
+        //таблица нормально работает на 100_000 записях
+        for (int i = 0; i < 1_000; i++) {
+            data.add(nextPerson());
+        }
         TableColumn<Person, String> firstNameCol = createTableColumn("First Name", Person::firstNameProperty);
         TableColumn<Person, String> lastNameCol = createTableColumn("Last Name", Person::lastNameProperty);
         TableColumn<Person, Number> heightCol = createTableColumn("Height", Person::heightProperty);
@@ -77,7 +73,6 @@ public class TableViewApplication extends Application {
         });
         TableColumn<Person, String> genderCol = createTableColumn("Gender", Person::genderProperty);
 
-        List<String> genders = List.of("М", "Ж", "Undefined");
         var tableView = TableViewBuilder.<Person>builder()
                 .addRowNumColumn()
                 .addColumn(firstNameCol, ColumnType.STRING)
@@ -91,14 +86,7 @@ public class TableViewApplication extends Application {
 
         Button addButton = new Button("Add Person");
         addButton.setOnAction(event -> {
-            Person randomPerson = new Person(
-                    "Name" + random.nextInt(100),
-                    "Surname" + random.nextInt(100),
-                    random.nextInt(150, 210),
-                    nextDate(),
-                    random.nextBoolean(),
-                    nextElem(genders)
-            );
+            Person randomPerson = nextPerson();
             data.add(randomPerson);
 //            tableView.refresh();
         });
@@ -111,6 +99,28 @@ public class TableViewApplication extends Application {
         stage.setTitle("TableView with Inline Filters");
         stage.show();
     }
+
+    private static Person nextPerson() {
+        return new Person(
+                nextElem(names) + random.nextInt(0, 100),
+                nextElem(surnames) + random.nextInt(0, 100),
+                random.nextInt(150, 210),
+                nextDate(),
+                random.nextBoolean(),
+                nextElem(genders)
+        );
+    }
+    private final static List<String> names = List.of(
+            "John", "Alice", "Bob", "Sophia", "Michael", "Emma", "James", "Olivia", "David", "Mia",
+            "Daniel", "Isabella", "Matthew", "Charlotte", "Alexander", "Amelia", "Ethan", "Harper",
+            "William", "Ella"
+    );
+
+    private final static List<String> surnames = List.of(
+            "Smith", "Johnson", "Williams", "Brown", "Jones", "Garcia", "Miller", "Davis", "Rodriguez",
+            "Martinez", "Hernandez", "Lopez", "Gonzalez", "Wilson", "Anderson", "Thomas", "Taylor", "Moore",
+            "Jackson", "Martin"
+    );
 
     private static <S, T> TableColumn<S, T> createTableColumn(String colName, Function<S, Property<T>> propertyGetter) {
         var col = new TableColumn<S, T>(colName);
