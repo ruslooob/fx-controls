@@ -1,9 +1,6 @@
 package com.ruslooob.fxcontrols;
 
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.SimpleObjectProperty;
-import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.property.StringProperty;
+import javafx.beans.property.*;
 
 import java.time.LocalDate;
 import java.util.Objects;
@@ -11,12 +8,16 @@ import java.util.Objects;
 public class Person {
     private final StringProperty firstName;
     private final StringProperty lastName;
+    private final IntegerProperty height;
     private final ObjectProperty<LocalDate> dateOfBirth;
+    private final BooleanProperty isEmployed;
 
-    public Person(String firstName, String lastName, LocalDate dateOfBirth) {
+    public Person(String firstName, String lastName, Integer height, LocalDate dateOfBirth, boolean isEmployed) {
         this.firstName = new SimpleStringProperty(firstName);
         this.lastName = new SimpleStringProperty(lastName);
+        this.height = new SimpleIntegerProperty(height);
         this.dateOfBirth = new SimpleObjectProperty<>(dateOfBirth);
+        this.isEmployed = new SimpleBooleanProperty(isEmployed);
     }
 
     public StringProperty firstNameProperty() {
@@ -35,12 +36,28 @@ public class Person {
         return lastName.get();
     }
 
+    public int getHeight() {
+        return height.get();
+    }
+
+    public IntegerProperty heightProperty() {
+        return height;
+    }
+
     public ObjectProperty<LocalDate> dateOfBirthProperty() {
         return dateOfBirth;
     }
 
     public LocalDate getDateOfBirth() {
         return dateOfBirth.get();
+    }
+
+    public boolean getIsEmployed() {
+        return isEmployed.get();
+    }
+
+    public BooleanProperty isEmployedProperty() {
+        return isEmployed;
     }
 
     @Override

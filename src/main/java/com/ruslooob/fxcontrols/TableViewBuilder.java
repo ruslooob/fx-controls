@@ -1,7 +1,14 @@
 package com.ruslooob.fxcontrols;
 
 import com.ruslooob.fxcontrols.controls.AdvancedTextFilter;
+import com.ruslooob.fxcontrols.filters.bool.FalseFilter;
+import com.ruslooob.fxcontrols.filters.bool.TrueFilter;
+import com.ruslooob.fxcontrols.filters.date.DateAfterFilter;
+import com.ruslooob.fxcontrols.filters.date.DateBeforeFilter;
 import com.ruslooob.fxcontrols.filters.date.DateEqualsFilter;
+import com.ruslooob.fxcontrols.filters.number.NumberAfterFilter;
+import com.ruslooob.fxcontrols.filters.number.NumberBeforeFilter;
+import com.ruslooob.fxcontrols.filters.number.NumberEqualsFilter;
 import com.ruslooob.fxcontrols.filters.string.EqualsFilterType;
 import com.ruslooob.fxcontrols.filters.string.StartsWithFilterType;
 import com.ruslooob.fxcontrols.filters.string.SubstringFilterType;
@@ -13,6 +20,7 @@ import javafx.geometry.Insets;
 import javafx.scene.control.Label;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 
@@ -115,9 +123,24 @@ public class TableViewBuilder<S> {
                 filterTextField.setFilterTypes(List.of(new SubstringFilterType(), new EqualsFilterType(), new StartsWithFilterType()));
                 return filterTextField;
             }
+            case NUMBER -> {
+                var filterTextField = new AdvancedTextFilter<Number>();
+                filterTextField.setFilterTypes(List.of(new NumberEqualsFilter(), new NumberBeforeFilter(), new NumberAfterFilter()));
+                return filterTextField;
+            }
+            case BOOL -> {
+                //todo поправить отображение фильтра на более красивое
+                // сделать сброс фильтра
+                var filterTextField = new AdvancedTextFilter<Boolean>();
+                filterTextField.setTextFilterVisible(false);
+                filterTextField.setPrefWidth(100);
+                filterTextField.setFilterTypes(List.of(new TrueFilter(), new FalseFilter()));
+                return filterTextField;
+            }
             case DATE -> {
+                //todo add dateControl
                 var filterTextField = new AdvancedTextFilter<LocalDate>();
-                filterTextField.setFilterTypes(List.of(new DateEqualsFilter()));
+                filterTextField.setFilterTypes(List.of(new DateEqualsFilter(), new DateBeforeFilter(), new DateAfterFilter()));
                 return filterTextField;
             }
             default -> throw new IllegalArgumentException("Unknown column type %s".formatted(type));

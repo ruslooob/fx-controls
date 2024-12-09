@@ -6,6 +6,7 @@ import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.StringProperty;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
 
@@ -20,7 +21,7 @@ public class AdvancedTextFilter<T> extends HBox {
     ObjectProperty<Predicate<T>> predicateProperty = new SimpleObjectProperty<>(s -> true);
 
     public AdvancedTextFilter() {
-        getChildren().addAll(textField, changeTypeComboButton);
+        getChildren().addAll(changeTypeComboButton, textField);
         //change predicate every time filter type was changed
         changeTypeComboButton.valueProperty().addListener((obs, oldVal, newVal) -> {
             Function<String, Predicate<T>> searchFunction = newVal.createSearchFunction();
@@ -51,5 +52,9 @@ public class AdvancedTextFilter<T> extends HBox {
 
     public StringProperty textProperty() {
         return textField.textProperty();
+    }
+
+    public void setTextFilterVisible(boolean visibility) {
+        this.textField.setManaged(visibility);
     }
 }

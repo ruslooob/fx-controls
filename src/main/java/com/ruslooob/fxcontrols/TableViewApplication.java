@@ -15,6 +15,7 @@ import javafx.util.StringConverter;
 
 import java.io.IOException;
 import java.time.LocalDate;
+import java.util.Random;
 import java.util.function.Function;
 
 import static com.ruslooob.fxcontrols.Utils.dateFormatter;
@@ -33,12 +34,13 @@ public class TableViewApplication extends Application {
     @Override
     public void start(Stage stage) throws IOException, InterruptedException {
         ObservableList<Person> data = FXCollections.observableArrayList(
-                new Person("John", "Doe", LocalDate.parse("1990-01-01")),
-                new Person("Jane", "Smith", LocalDate.parse("1985-05-15")),
-                new Person("Mike", "Johnson", LocalDate.parse("2000-12-22"))
+                new Person("John", "Doe", 176, LocalDate.parse("1990-01-01"), true),
+                new Person("Jane", "Smith", 180, LocalDate.parse("1985-05-15"), false),
+                new Person("Mike", "Johnson", 190, LocalDate.parse("2000-12-22"), true)
         );
         TableColumn<Person, String> firstNameCol = createTableColumn("First Name", Person::firstNameProperty);
         TableColumn<Person, String> lastNameCol = createTableColumn("Last Name", Person::lastNameProperty);
+        TableColumn<Person, Number> heightCol = createTableColumn("Height", Person::heightProperty);
 
         TableColumn<Person, LocalDate> dateOfBirthCol = createTableColumn("Date of Birth", Person::dateOfBirthProperty);
         dateOfBirthCol.setCellFactory(TextFieldTableCell.forTableColumn(new StringConverter<>() {
@@ -53,23 +55,27 @@ public class TableViewApplication extends Application {
             }
         }));
 
+        TableColumn<Person, Boolean> isEmployedCol = createTableColumn("Is Employed", Person::isEmployedProperty);
+
         var tableView = TableViewBuilder.<Person>builder()
                 .addColumn(firstNameCol, ColumnType.STRING)
                 .addColumn(lastNameCol, ColumnType.STRING)
+                .addColumn(heightCol, ColumnType.NUMBER)
                 .addColumn(dateOfBirthCol, ColumnType.DATE)
+                .addColumn(isEmployedCol, ColumnType.BOOL)
                 .items(data)
                 .build();
 
         Button addButton = new Button("Add Person");
         addButton.setOnAction(event -> {
-            data.add(new Person("New", "Person", LocalDate.now()));
+            data.add(new Person("New", "Person", 190, LocalDate.now(), new Random().nextBoolean()));
 //            tableView.refresh();
         });
 
         VBox layout = new VBox(10, tableView, addButton);
         layout.setPadding(new Insets(10));
 
-        Scene scene = new Scene(layout, 800, 600);
+        Scene scene = new Scene(layout, 1500, 600);
         stage.setScene(scene);
         stage.setTitle("TableView with Inline Filters");
         stage.show();

@@ -32,7 +32,7 @@ public class ComboButton<T> extends Button {
         popup.setAutoHide(true);
         listView.setFixedCellSize(CELL_SIZE);
         listView.setMaxHeight((CELL_SIZE + 1) * MAX_HEIGHT_CELLS_COUNT);
-        listView.prefHeightProperty().bind(listView.fixedCellSizeProperty().multiply(Bindings.size(listView.getItems())).add(5));
+        listView.prefHeightProperty().bind(listView.fixedCellSizeProperty().multiply(Bindings.size(listView.getItems())).add(15));
 
         listView.prefWidthProperty().bind(widthProperty());
         popup.getContent().add(listView);
