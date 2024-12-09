@@ -13,18 +13,13 @@ import javafx.geometry.Insets;
 import javafx.scene.control.Label;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
-import javafx.scene.control.cell.TextFieldTableCell;
-import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
-import javafx.util.StringConverter;
 
 import java.time.LocalDate;
 import java.util.*;
 import java.util.function.Function;
 import java.util.function.Predicate;
-
-import static com.ruslooob.fxcontrols.Utils.dateFormatter;
 
 @SuppressWarnings("unchecked")
 public class TableViewBuilder<S> {
@@ -36,8 +31,9 @@ public class TableViewBuilder<S> {
         return new TableViewBuilder<>();
     }
 
-    public <T> TableViewBuilder<S> addColumn(String colName, ColumnType type, Function<S, Property<T>> propertyGetter) {
-        this.colInfoByName.put(colName, new ColumnInfo<>(colName, type, propertyGetter));
+    public <T> TableViewBuilder<S> addColumn(TableColumn<S, T> col, ColumnType type) {
+        ColumnInfo<S, T> colInfo = new ColumnInfo<>(col, type);
+        this.colInfoByName.put(colInfo.name(), colInfo);
         return this;
     }
 
@@ -51,17 +47,17 @@ public class TableViewBuilder<S> {
         //create columns
         List<TableColumn<S, ?>> columns = new ArrayList<>();
         for (var columnInfo : colInfoByName.values()) {
-            var columnAndFilter = createColumnAndFilter(columnInfo);
+            var columnAndFilter = createFilterColumn(columnInfo);
             columns.add(columnAndFilter.first());
-            filtersByName.put(columnInfo.columnName(), columnAndFilter.last());
+            filtersByName.put(columnInfo.name(), columnAndFilter.last());
         }
         //build predicate logic for filters
         var filteredData = new FilteredList<>(items, p -> true);
         Map<String, Predicate<?>> predicateMap = new HashMap<>();
         for (var columnInfo : colInfoByName.values()) {
-            AdvancedTextFilter<?> filterTextField = filtersByName.get(columnInfo.columnName());
+            AdvancedTextFilter<?> filterTextField = filtersByName.get(columnInfo.name());
             filterTextField.predicateProperty().addListener((obs, oldVal, newVal) -> {
-                predicateMap.put(columnInfo.columnName(), filterTextField.getPredicate());
+                predicateMap.put(columnInfo.name(), filterTextField.getPredicate());
                 filteredData.setPredicate(combinePredicates(predicateMap));
             });
         }
@@ -85,7 +81,7 @@ public class TableViewBuilder<S> {
         for (Map.Entry<String, Predicate<?>> predicateEntry : predicateMap.entrySet()) {
             String colName = predicateEntry.getKey();
             Predicate<?> filterPredicate = predicateEntry.getValue();
-            Function<S, ? extends Property<?>> propertyGetter = colInfoByName.get(colName).propertyGetter();
+            Function<S, ? extends Property<?>> propertyGetter = colInfoByName.get(colName).getPropertyGetter();
             Predicate<S> predicate = record -> {
                 Property<?> property = propertyGetter.apply(record);
                 if (property == null) {
@@ -100,32 +96,14 @@ public class TableViewBuilder<S> {
         return resPredicate;
     }
 
-    private <T> Pair<TableColumn<S, T>, AdvancedTextFilter<?>> createColumnAndFilter(ColumnInfo<S, T> columnInfo) {
-        var col = new TableColumn<S, T>();
-        col.setPrefWidth(200);
-        String colName = columnInfo.columnName();
-        col.setCellValueFactory(cellData -> columnInfo.propertyGetter().apply(cellData.getValue()));
+    private <T> Pair<TableColumn<S, T>, AdvancedTextFilter<?>> createFilterColumn(ColumnInfo<S, T> columnInfo) {
+        TableColumn<S, T> col = columnInfo.getColumn();
 
-        if (columnInfo.columnType() == ColumnType.DATE) {
-            col.setCellFactory(TextFieldTableCell.forTableColumn(new StringConverter<>() {
-                @Override
-                public String toString(T date) {
-                    return date != null ? ((LocalDate) date).format(dateFormatter) : "";
-                }
-
-                @Override
-                public T fromString(String string) {
-                    return string != null && !string.isEmpty() ? (T) LocalDate.parse(string, dateFormatter) : null;
-                }
-            }));
-        }
-
-        AdvancedTextFilter<?> filterTextField = createFilter(columnInfo.columnType());
-        var colNameWithFilterVBox = new VBox(new Label(colName), filterTextField);
+        AdvancedTextFilter<?> filterTextField = createFilter(columnInfo.getType());
+        var colNameWithFilterVBox = new VBox(new Label(columnInfo.name()), filterTextField);
         colNameWithFilterVBox.setPadding(new Insets(5));
         VBox.setVgrow(colNameWithFilterVBox, Priority.ALWAYS);
-        HBox.setHgrow(filterTextField, Priority.ALWAYS);
-
+        col.setText("");
         col.setGraphic(colNameWithFilterVBox);
         return new Pair<>(col, filterTextField);
     }

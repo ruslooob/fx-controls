@@ -20,7 +20,7 @@ import java.util.function.Function;
 public class ComboButton<T> extends Button {
     static int CELL_SIZE = 30;
     static int MAX_HEIGHT_CELLS_COUNT = 4;
-    // todo add autohide if user clicks to another place
+    // todo add tooltip on filters
 
     Popup popup = new Popup();
     ListView<T> listView = new ListView<>();
@@ -29,6 +29,7 @@ public class ComboButton<T> extends Button {
 
     public ComboButton() {
         setMinWidth(50);
+        popup.setAutoHide(true);
         listView.setFixedCellSize(CELL_SIZE);
         listView.setMaxHeight((CELL_SIZE + 1) * MAX_HEIGHT_CELLS_COUNT);
         listView.prefHeightProperty().bind(listView.fixedCellSizeProperty().multiply(Bindings.size(listView.getItems())).add(5));
