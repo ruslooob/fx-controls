@@ -22,6 +22,7 @@ import javafx.collections.transformation.FilteredList;
 import javafx.collections.transformation.SortedList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.ColumnConstraints;
@@ -30,6 +31,7 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.stage.FileChooser;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
 import lombok.Setter;
 import org.controlsfx.control.ToggleSwitch;
@@ -125,7 +127,7 @@ public class TableViewBuilder<S> {
 
         var tableView = new TableView<S>();
         // todo refactor deep columns pass
-        TableColumn<S, Integer> actionCol = createActionsColumn(columns);
+        TableColumn<S, Integer> actionCol = createActionsColumn(tableView, columns);
         columns.add(0, actionCol);
 
         if (enableRowNumCol) {
@@ -148,6 +150,7 @@ public class TableViewBuilder<S> {
     private AdvancedFilter<?> createColumnFilter(ColumnType type, Map<PropType, Object> colProps) {
         switch (type) {
             case STRING -> {
+                // todo think about constructo pass List<FilterTypes> after creating AdvancedEnumControl
                 var filterTextField = new AdvancedTextFilter<String>();
                 filterTextField.setFilterTypes(List.of(new SubstringFilterType(), new EqualsFilterType(), new StartsWithFilterType()));
                 return filterTextField;
@@ -158,6 +161,7 @@ public class TableViewBuilder<S> {
                 return filterTextField;
             }
             case BOOL -> {
+                // todo create AdvancedEnumControl and then remove setTextFilterVisible method from interface
                 List<String> filterTypes = (List<String>) colProps.get(BOOLEAN_TYPES);
                 List<TextFilterType<String>> enumFilterTypes;
                 if (filterTypes != null) {
@@ -214,7 +218,9 @@ public class TableViewBuilder<S> {
                     return ((Predicate<Object>) filterPredicate).test(value);
                 } else {
                     // т.к ColumnType.BOOL реализован через ENUM, то нам нужно преобразовать boolean в String
-                    return ((Predicate<Object>) filterPredicate).test(mapBoolToString((boolean) value, props.getOrDefault(colName, new HashMap<>())));
+                    return ((Predicate<Object>) filterPredicate).test(
+                            mapBoolToString((boolean) value,
+                                    (List<String>) props.getOrDefault(colName, new HashMap<>()).get(BOOLEAN_TYPES)));
                 }
             };
             resPredicate = resPredicate.and(predicate);
@@ -223,10 +229,7 @@ public class TableViewBuilder<S> {
         return resPredicate;
     }
 
-    //todo refactor and passFilterTypes
-    private String mapBoolToString(boolean val, Map<PropType, Object> colProps) {
-        List<String> filterTypes = (List<String>) colProps.get(BOOLEAN_TYPES);
-
+    private String mapBoolToString(boolean val, List<String> filterTypes) {
         if (filterTypes == null) {
             return val ? DEFAULT_BOOL_TRUE_STR : DEFAULT_BOOL_FALSE_STR;
         } else {
@@ -237,7 +240,7 @@ public class TableViewBuilder<S> {
         }
     }
 
-    private TableColumn<S, Integer> createActionsColumn(List<TableColumn<S, ?>> columns) {
+    private TableColumn<S, Integer> createActionsColumn(Parent background, List<TableColumn<S, ?>> columns) {
         var col = new TableColumn<S, Integer>();
         col.setPrefWidth(50);
 
@@ -246,8 +249,8 @@ public class TableViewBuilder<S> {
         var menuButton = new MenuButton();
         menuButton.setGraphic(burgerIcon);
         menuButton.getItems().addAll(
-                createClearFiltersMenuItem(),
-                createChangeTableColumnsMenuItem(columns),
+                createClearFiltersMenuItem(columns),
+                createChangeTableColumnsMenuItem(background, columns),
                 createExportToCsvMenuItem(columns));
 
         col.setGraphic(menuButton);
@@ -255,15 +258,20 @@ public class TableViewBuilder<S> {
         return col;
     }
 
-    private MenuItem createClearFiltersMenuItem() {
+    private MenuItem createClearFiltersMenuItem(List<TableColumn<S, ?>> columns) {
         var menuItem = new MenuItem("Сбросить фильтры");
         menuItem.setOnAction(event -> {
-            //todo implement clear all filters logic
+            for (int i = 1; i < columns.size(); i++) {
+                TableColumn<S, ?> column = columns.get(i);
+                // todo fix this double cast
+                AdvancedFilter<?> filter = (AdvancedFilter<?>) ((VBox) column.getGraphic()).getChildren().get(1);
+                filter.clear();
+            }
         });
         return menuItem;
     }
 
-    private MenuItem createChangeTableColumnsMenuItem(List<TableColumn<S, ?>> columns) {
+    private MenuItem createChangeTableColumnsMenuItem(Parent background, List<TableColumn<S, ?>> columns) {
         var menuItem = new MenuItem("Настройка колонок");
         menuItem.setOnAction(event -> {
             var colSettingsGrid = new GridPane();
@@ -277,8 +285,6 @@ public class TableViewBuilder<S> {
             colSettingsGrid.getColumnConstraints().addAll(col1, col2);
 
             int row = 0;
-            //skip first column from hiding
-            // todo find out why we should start from 1, but we do not set action column at this moment
             for (int i = 1; i < columns.size(); i++) {
                 TableColumn<S, ?> col = columns.get(i);
 
@@ -297,9 +303,10 @@ public class TableViewBuilder<S> {
                 row++;
             }
             colSettingsGrid.setPadding(new Insets(20));
-            //todo make this dialogBox depend from Parent Stage
             // todo style this stage properly, only one close button and white background
             var stage = new Stage();
+            stage.initOwner(background.getScene().getWindow());
+            stage.initModality(Modality.WINDOW_MODAL);
             var scene = new Scene(colSettingsGrid, 300, 200);
             stage.setScene(scene);
             stage.show();

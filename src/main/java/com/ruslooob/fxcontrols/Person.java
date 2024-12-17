@@ -5,6 +5,9 @@ import javafx.beans.property.*;
 import java.time.LocalDate;
 import java.util.Objects;
 
+/**
+ * Class for demonstration purposes
+ */
 public class Person {
     private final StringProperty firstName;
     private final StringProperty lastName;

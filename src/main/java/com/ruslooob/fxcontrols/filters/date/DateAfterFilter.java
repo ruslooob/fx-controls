@@ -13,14 +13,14 @@ public final class DateAfterFilter extends TextFilterType<LocalDate> {
     @Override
     public Function<String, Predicate<LocalDate>> createSearchFunction() {
         return search -> input -> {
-            if (search.isBlank()) {
+            if (search == null || search.isBlank()) {
                 return true;
             }
             LocalDate searchDate;
             try {
                 searchDate = LocalDate.parse(search, dateFormatter);
             } catch (DateTimeParseException e) {
-                return false;
+                return true; // ignore filter if wrong date passed
             }
             return input.isAfter(searchDate);
         };

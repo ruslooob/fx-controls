@@ -58,6 +58,11 @@ public class AdvancedTextFilter<T> extends HBox implements AdvancedFilter<T> {
         return predicateProperty;
     }
 
+    @Override
+    public void clear() {
+        textField.setText("");
+    }
+
     public Predicate<T> getPredicate() {
         return predicateProperty.get();
     }
