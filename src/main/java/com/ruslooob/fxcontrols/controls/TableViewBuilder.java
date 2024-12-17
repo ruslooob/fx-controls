@@ -15,6 +15,7 @@ import com.ruslooob.fxcontrols.filters.string.EqualsFilterType;
 import com.ruslooob.fxcontrols.filters.string.StartsWithFilterType;
 import com.ruslooob.fxcontrols.filters.string.SubstringFilterType;
 import com.ruslooob.fxcontrols.model.ColumnInfo;
+import javafx.animation.PauseTransition;
 import javafx.beans.property.Property;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.ObservableList;
@@ -33,6 +34,7 @@ import javafx.scene.text.Font;
 import javafx.stage.FileChooser;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 import lombok.Setter;
 import org.controlsfx.control.ToggleSwitch;
 import org.kordamp.ikonli.fontawesome5.FontAwesomeSolid;
@@ -64,6 +66,8 @@ public class TableViewBuilder<S> {
     private SortedList<S> sortedData;
     //some properties which can be used while constructing column filters. Map<colName, Map<PropType, Object>>
     private Map<String, Map<PropType, Object>> props = new HashMap<>();
+
+    private final PauseTransition debouncePause = new PauseTransition(Duration.millis(250));
 
     @Setter
     private Consumer<List<S>> exportToCsvHandler;
@@ -107,7 +111,7 @@ public class TableViewBuilder<S> {
             var columnFilter = createColumnFilter(columnInfo.getType(), props.getOrDefault(columnInfo.getName(), new HashMap<>()));
             nameWithFilterVbox.setAlignment(Pos.CENTER);
             nameWithFilterVbox.setPadding(new Insets(5));
-            nameWithFilterVbox.getChildren().addAll(filterColumnName, columnFilter.getNode());
+            nameWithFilterVbox.getChildren().addAll(filterColumnName, columnFilter);
 
             col.setGraphic(nameWithFilterVbox);
             columns.add(col);
@@ -120,8 +124,11 @@ public class TableViewBuilder<S> {
         for (var columnInfo : colInfoByName.values()) {
             var filterTextField = filtersByName.get(columnInfo.name());
             filterTextField.predicateProperty().addListener((obs, oldVal, newVal) -> {
-                predicateMap.put(columnInfo.name(), newVal);
-                filteredData.setPredicate(combinePredicates(predicateMap));
+                debouncePause.setOnFinished(event -> {
+                    predicateMap.put(columnInfo.name(), newVal);
+                    filteredData.setPredicate(combinePredicates(predicateMap));
+                });
+                debouncePause.playFromStart();
             });
         }
 
@@ -150,18 +157,17 @@ public class TableViewBuilder<S> {
     private AdvancedFilter<?> createColumnFilter(ColumnType type, Map<PropType, Object> colProps) {
         switch (type) {
             case STRING -> {
-                // todo think about constructo pass List<FilterTypes> after creating AdvancedEnumControl
-                var filterTextField = new AdvancedTextFilter<String>();
-                filterTextField.setFilterTypes(List.of(new SubstringFilterType(), new EqualsFilterType(), new StartsWithFilterType()));
-                return filterTextField;
+                // todo think about constructor pass List<FilterTypes> after creating AdvancedEnumControl
+                var filter = new AdvancedTextFilter<String>();
+                filter.setFilterTypes(List.of(new SubstringFilterType(), new EqualsFilterType(), new StartsWithFilterType()));
+                return filter;
             }
             case NUMBER -> {
-                var filterTextField = new AdvancedTextFilter<Number>();
-                filterTextField.setFilterTypes(List.of(new NumberEqualsFilter(), new NumberBeforeFilter(), new NumberAfterFilter()));
-                return filterTextField;
+                var filter = new AdvancedTextFilter<Number>();
+                filter.setFilterTypes(List.of(new NumberEqualsFilter(), new NumberBeforeFilter(), new NumberAfterFilter()));
+                return filter;
             }
             case BOOL -> {
-                // todo create AdvancedEnumControl and then remove setTextFilterVisible method from interface
                 List<String> filterTypes = (List<String>) colProps.get(BOOLEAN_TYPES);
                 List<TextFilterType<String>> enumFilterTypes;
                 if (filterTypes != null) {
@@ -171,27 +177,27 @@ public class TableViewBuilder<S> {
                     enumFilterTypes = List.of(new AllIncludeEnumFilter(), new EnumFilter("Да"), new EnumFilter("Нет"));
                 }
 
-                var filterTextField = new AdvancedTextFilter<String>();
-                filterTextField.setTextFilterVisible(false);
-                filterTextField.setFilterTypes(enumFilterTypes);
-                return filterTextField;
+                var filter = new AdvancedEnumFilter();
+                filter.setFilterTypes(enumFilterTypes);
+                return filter;
             }
             case DATE -> {
-                var filterTextField = new AdvancedDateFilter();
-                filterTextField.setFilterTypes(List.of(new DateEqualsFilter(), new DateBeforeFilter(), new DateAfterFilter()));
-                return filterTextField;
+                // todo Think about implementing more intelligent filters for search by day, month, and year and some patterns.
+                // This could impact the search speed, making it slower. Maybe implement some trade-off solution, for example DatePatternFilter
+                var filter = new AdvancedDateFilter();
+                filter.setFilterTypes(List.of(new DateEqualsFilter(), new DateBeforeFilter(), new DateAfterFilter()));
+                return filter;
             }
             case ENUM -> {
                 List<String> filterTypes = (List<String>) colProps.get(ENUM_FILTER_TYPES);
                 if (filterTypes == null) {
                     throw new IllegalArgumentException("Cannot create enum column filter without prop: %s. Please, pass it via addColumn method.".formatted(ENUM_FILTER_TYPES));
                 }
-                var filterTextField = new AdvancedTextFilter<String>();
-                filterTextField.setTextFilterVisible(false);
+                var filter = new AdvancedEnumFilter();
                 List<TextFilterType<String>> enumFilterTypes = filterTypes.stream().map(EnumFilter::new).map(f -> (TextFilterType<String>) f).collect(Collectors.toList());
                 enumFilterTypes.add(0, new AllIncludeEnumFilter());
-                filterTextField.setFilterTypes(enumFilterTypes);
-                return filterTextField;
+                filter.setFilterTypes(enumFilterTypes);
+                return filter;
             }
             default -> throw new IllegalArgumentException("Unknown column type %s".formatted(type));
         }

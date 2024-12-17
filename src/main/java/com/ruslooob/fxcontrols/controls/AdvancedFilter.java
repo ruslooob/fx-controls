@@ -2,19 +2,31 @@ package com.ruslooob.fxcontrols.controls;
 
 import com.ruslooob.fxcontrols.filters.TextFilterType;
 import javafx.beans.property.ObjectProperty;
-import javafx.scene.Node;
+import javafx.beans.property.SimpleObjectProperty;
+import javafx.scene.layout.HBox;
+import lombok.AccessLevel;
+import lombok.experimental.FieldDefaults;
 
 import java.util.List;
 import java.util.function.Predicate;
 
-public interface AdvancedFilter<T> {
-    void setFilterTypes(List<? extends TextFilterType<T>> filterTypes);
-    ObjectProperty<Predicate<T>> predicateProperty();
-    void clear();
+@FieldDefaults(level = AccessLevel.PROTECTED, makeFinal = true)
+public abstract class AdvancedFilter<T> extends HBox {
+    ComboButton<TextFilterType<T>> typeComboButton = new ComboButton<>();
+    ObjectProperty<Predicate<T>> predicateProperty = new SimpleObjectProperty<>(s -> true);
 
-    //todo This is only for Boolean and Enum. remove this method after refactoring.
-    void setTextFilterVisible(boolean visible);
+    @SuppressWarnings("unchecked")
+    public final void setFilterTypes(List<? extends TextFilterType<T>> filterTypes) {
+        this.typeComboButton.setItems((List<TextFilterType<T>>) filterTypes);
+        this.typeComboButton.setCellConverter(TextFilterType::toString);
+        this.typeComboButton.setCellTooltipConverter(TextFilterType::getTooltipText);
+    }
 
-    // todo think about this, i don't like it
-    Node getNode();
+    public final ObjectProperty<Predicate<T>> predicateProperty() {
+        return predicateProperty;
+    }
+
+    public void clear() {
+        //do nothing
+    }
 }

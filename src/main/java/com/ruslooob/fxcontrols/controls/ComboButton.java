@@ -104,7 +104,7 @@ public class ComboButton<T> extends Button {
         return cellTooltipConverterProperty.get();
     }
 
-    public ObjectProperty<Function<T, String>> cellTooltipConverterPropertyProperty() {
+    public ObjectProperty<Function<T, String>> cellTooltipConverterProperty() {
         return cellTooltipConverterProperty;
     }
 
