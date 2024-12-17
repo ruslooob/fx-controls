@@ -15,9 +15,9 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.util.StringConverter;
 
-import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Random;
 import java.util.function.Function;
@@ -36,7 +36,8 @@ public class TableViewApplication extends Application {
 
     @Override
     public void start(Stage stage) {
-
+        // Используется в некоторых контролах, например DatePicker
+        Locale.setDefault(Locale.forLanguageTag("ru-RU"));
         ObservableList<Person> data = observableArrayList();
         //таблица нормально работает на 100_000 записях
         for (int i = 0; i < 1_000; i++) {

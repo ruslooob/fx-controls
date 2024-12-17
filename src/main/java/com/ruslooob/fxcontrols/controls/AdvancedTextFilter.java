@@ -5,6 +5,7 @@ import javafx.animation.PauseTransition;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.StringProperty;
+import javafx.scene.Node;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.HBox;
 import javafx.util.Duration;
@@ -15,10 +16,8 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-import static com.ruslooob.fxcontrols.Utils.addBorder;
-
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
-public class AdvancedTextFilter<T> extends HBox {
+public class AdvancedTextFilter<T> extends HBox implements AdvancedFilter<T> {
     PauseTransition debouncePause = new PauseTransition(Duration.millis(250));
     //todo add clear button
     TextField textField = new TextField();
@@ -26,7 +25,6 @@ public class AdvancedTextFilter<T> extends HBox {
     ObjectProperty<Predicate<T>> predicateProperty = new SimpleObjectProperty<>(s -> true);
 
     public AdvancedTextFilter() {
-        addBorder(this);
         getChildren().addAll(changeTypeComboButton, textField);
         //change predicate every time filter type was changed
         changeTypeComboButton.valueProperty().addListener((obs, oldVal, newVal) -> {
@@ -43,6 +41,7 @@ public class AdvancedTextFilter<T> extends HBox {
         });
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public void setFilterTypes(List<? extends TextFilterType<T>> filterTypes) {
         this.changeTypeComboButton.setItems((List<TextFilterType<T>>) filterTypes);
@@ -54,6 +53,7 @@ public class AdvancedTextFilter<T> extends HBox {
         this.changeTypeComboButton.setValue(value);
     }
 
+    @Override
     public ObjectProperty<Predicate<T>> predicateProperty() {
         return predicateProperty;
     }
@@ -66,13 +66,23 @@ public class AdvancedTextFilter<T> extends HBox {
         return textField.textProperty();
     }
 
-    public void setTextFilterVisible(boolean visibility) {
-        if (visibility) {
+    public void setText(String text) {
+        this.textField.setText(text);
+    }
+
+    @Override
+    public void setTextFilterVisible(boolean visible) {
+        if (visible) {
             getChildren().setAll(changeTypeComboButton, textField);
             changeTypeComboButton.setPrefWidth(USE_COMPUTED_SIZE);
         } else {
             getChildren().setAll(changeTypeComboButton);
             changeTypeComboButton.setPrefWidth(Integer.MAX_VALUE);
         }
+    }
+
+    @Override
+    public Node getNode() {
+        return this;
     }
 }

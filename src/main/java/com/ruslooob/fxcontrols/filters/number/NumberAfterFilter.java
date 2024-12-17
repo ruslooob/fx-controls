@@ -26,4 +26,9 @@ public final class NumberAfterFilter extends TextFilterType<Number> {
     public String toString() {
         return ">";
     }
+
+    @Override
+    public String getTooltipText() {
+        return "Больше";
+    }
 }

@@ -15,20 +15,33 @@ import com.ruslooob.fxcontrols.filters.string.EqualsFilterType;
 import com.ruslooob.fxcontrols.filters.string.StartsWithFilterType;
 import com.ruslooob.fxcontrols.filters.string.SubstringFilterType;
 import com.ruslooob.fxcontrols.model.ColumnInfo;
-import com.ruslooob.fxcontrols.model.Pair;
 import javafx.beans.property.Property;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import javafx.collections.transformation.SortedList;
 import javafx.geometry.Insets;
-import javafx.scene.control.Label;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableView;
+import javafx.geometry.Pos;
+import javafx.scene.Scene;
+import javafx.scene.control.*;
+import javafx.scene.layout.ColumnConstraints;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import javafx.scene.text.Font;
+import javafx.stage.FileChooser;
+import javafx.stage.Stage;
+import lombok.Setter;
+import org.controlsfx.control.ToggleSwitch;
+import org.kordamp.ikonli.fontawesome5.FontAwesomeSolid;
+import org.kordamp.ikonli.javafx.FontIcon;
 
-import java.time.LocalDate;
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -38,7 +51,6 @@ import static com.ruslooob.fxcontrols.enums.PropType.ENUM_FILTER_TYPES;
 
 @SuppressWarnings("unchecked")
 //todo add clear all filters button
-//todo add actions button via additional first column. Available actions: export to csv, clear all filters, show/hide columns
 public class TableViewBuilder<S> {
     private static final String DEFAULT_BOOL_TRUE_STR = "ДА";
     private static final String DEFAULT_BOOL_FALSE_STR = "Нет";
@@ -47,8 +59,12 @@ public class TableViewBuilder<S> {
     private Map<String, ColumnInfo<S, ?>> colInfoByName = new LinkedHashMap<>();
     private boolean enableRowNumCol = false;
     private ObservableList<S> items;
+    private SortedList<S> sortedData;
     //some properties which can be used while constructing column filters. Map<colName, Map<PropType, Object>>
     private Map<String, Map<PropType, Object>> props = new HashMap<>();
+
+    @Setter
+    private Consumer<List<S>> exportToCsvHandler;
 
     public static <S> TableViewBuilder<S> builder() {
         return new TableViewBuilder<>();
@@ -76,57 +92,60 @@ public class TableViewBuilder<S> {
     }
 
     public TableView<S> build() {
-        Map<String, AdvancedTextFilter<?>> filtersByName = new HashMap<>();
+        Map<String, AdvancedFilter<?>> filtersByName = new HashMap<>();
         //create columns
         List<TableColumn<S, ?>> columns = new ArrayList<>();
         for (var columnInfo : colInfoByName.values()) {
-            var columnAndFilter = createFilterColumn(columnInfo);
-            columns.add(columnAndFilter.first());
-            filtersByName.put(columnInfo.name(), columnAndFilter.last());
+            TableColumn<S, ?> col = columnInfo.getColumn();
+            col.setText("");
+            Label filterColumnName = new Label(columnInfo.name());
+            filterColumnName.setFont(new Font(filterColumnName.getFont().getName(), filterColumnName.getFont().getSize() + 3));
+
+            VBox nameWithFilterVbox = new VBox(5);
+            var columnFilter = createColumnFilter(columnInfo.getType(), props.getOrDefault(columnInfo.getName(), new HashMap<>()));
+            nameWithFilterVbox.setAlignment(Pos.CENTER);
+            nameWithFilterVbox.setPadding(new Insets(5));
+            nameWithFilterVbox.getChildren().addAll(filterColumnName, columnFilter.getNode());
+
+            col.setGraphic(nameWithFilterVbox);
+            columns.add(col);
+
+            filtersByName.put(columnInfo.name(), columnFilter);
         }
         //build predicate logic for filters
         var filteredData = new FilteredList<>(items, p -> true);
         Map<String, Predicate<?>> predicateMap = new HashMap<>();
         for (var columnInfo : colInfoByName.values()) {
-            AdvancedTextFilter<?> filterTextField = filtersByName.get(columnInfo.name());
+            var filterTextField = filtersByName.get(columnInfo.name());
             filterTextField.predicateProperty().addListener((obs, oldVal, newVal) -> {
-                predicateMap.put(columnInfo.name(), filterTextField.getPredicate());
+                predicateMap.put(columnInfo.name(), newVal);
                 filteredData.setPredicate(combinePredicates(predicateMap));
             });
         }
 
         var tableView = new TableView<S>();
+        // todo refactor deep columns pass
+        TableColumn<S, Integer> actionCol = createActionsColumn(columns);
+        columns.add(0, actionCol);
+
         if (enableRowNumCol) {
-            TableColumn<S, Integer> numCol = new TableColumn<>("№");
-            numCol.setCellValueFactory(cellData -> {
+            //reuse empty action column for specifying rowNum
+            actionCol.setCellValueFactory(cellData -> {
                 int index = tableView.getItems().indexOf(cellData.getValue()) + 1;
                 return new SimpleObjectProperty<>(index);
             });
-            numCol.setSortable(false);
-            columns.add(0, numCol);
         }
         tableView.getColumns().addAll(columns);
 
         //build sorting logic
-        var sortedData = new SortedList<>(filteredData);
+        sortedData = new SortedList<>(filteredData);
         sortedData.comparatorProperty().bind(tableView.comparatorProperty());
         tableView.setItems(sortedData);
 
         return tableView;
     }
 
-    private <T> Pair<TableColumn<S, T>, AdvancedTextFilter<?>> createFilterColumn(ColumnInfo<S, T> columnInfo) {
-        TableColumn<S, T> col = columnInfo.getColumn();
-
-        AdvancedTextFilter<?> filterTextField = createFilter(columnInfo.getType(), props.getOrDefault(columnInfo.getName(), new HashMap<>()));
-        var colNameWithFilterVBox = new VBox(new Label(columnInfo.name()), filterTextField);
-        colNameWithFilterVBox.setPadding(new Insets(5));
-        col.setText("");
-        col.setGraphic(colNameWithFilterVBox);
-        return new Pair<>(col, filterTextField);
-    }
-
-    private AdvancedTextFilter<?> createFilter(ColumnType type, Map<PropType, Object> colProps) {
+    private AdvancedFilter<?> createColumnFilter(ColumnType type, Map<PropType, Object> colProps) {
         switch (type) {
             case STRING -> {
                 var filterTextField = new AdvancedTextFilter<String>();
@@ -139,14 +158,10 @@ public class TableViewBuilder<S> {
                 return filterTextField;
             }
             case BOOL -> {
-                // для BOOL исключение String вместо Boolean
-                List<String> filterTypes = (List<String>) colProps.get(ENUM_FILTER_TYPES);
+                List<String> filterTypes = (List<String>) colProps.get(BOOLEAN_TYPES);
                 List<TextFilterType<String>> enumFilterTypes;
                 if (filterTypes != null) {
-                    enumFilterTypes = filterTypes.stream()
-                            .map(EnumFilter::new)
-                            .map(f -> (TextFilterType<String>) f)
-                            .collect(Collectors.toList());
+                    enumFilterTypes = filterTypes.stream().map(EnumFilter::new).map(f -> (TextFilterType<String>) f).collect(Collectors.toList());
                     enumFilterTypes.add(0, new AllIncludeEnumFilter());
                 } else {
                     enumFilterTypes = List.of(new AllIncludeEnumFilter(), new EnumFilter("Да"), new EnumFilter("Нет"));
@@ -158,8 +173,7 @@ public class TableViewBuilder<S> {
                 return filterTextField;
             }
             case DATE -> {
-                //todo add datePicker for user input
-                var filterTextField = new AdvancedTextFilter<LocalDate>();
+                var filterTextField = new AdvancedDateFilter();
                 filterTextField.setFilterTypes(List.of(new DateEqualsFilter(), new DateBeforeFilter(), new DateAfterFilter()));
                 return filterTextField;
             }
@@ -170,10 +184,7 @@ public class TableViewBuilder<S> {
                 }
                 var filterTextField = new AdvancedTextFilter<String>();
                 filterTextField.setTextFilterVisible(false);
-                List<TextFilterType<String>> enumFilterTypes = filterTypes.stream()
-                        .map(EnumFilter::new)
-                        .map(f -> (TextFilterType<String>) f)
-                        .collect(Collectors.toList());
+                List<TextFilterType<String>> enumFilterTypes = filterTypes.stream().map(EnumFilter::new).map(f -> (TextFilterType<String>) f).collect(Collectors.toList());
                 enumFilterTypes.add(0, new AllIncludeEnumFilter());
                 filterTextField.setFilterTypes(enumFilterTypes);
                 return filterTextField;
@@ -226,4 +237,124 @@ public class TableViewBuilder<S> {
         }
     }
 
+    private TableColumn<S, Integer> createActionsColumn(List<TableColumn<S, ?>> columns) {
+        var col = new TableColumn<S, Integer>();
+        col.setPrefWidth(50);
+
+        var burgerIcon = new FontIcon(FontAwesomeSolid.BARS);
+
+        var menuButton = new MenuButton();
+        menuButton.setGraphic(burgerIcon);
+        menuButton.getItems().addAll(
+                createClearFiltersMenuItem(),
+                createChangeTableColumnsMenuItem(columns),
+                createExportToCsvMenuItem(columns));
+
+        col.setGraphic(menuButton);
+        col.setSortable(false);
+        return col;
+    }
+
+    private MenuItem createClearFiltersMenuItem() {
+        var menuItem = new MenuItem("Сбросить фильтры");
+        menuItem.setOnAction(event -> {
+            //todo implement clear all filters logic
+        });
+        return menuItem;
+    }
+
+    private MenuItem createChangeTableColumnsMenuItem(List<TableColumn<S, ?>> columns) {
+        var menuItem = new MenuItem("Настройка колонок");
+        menuItem.setOnAction(event -> {
+            var colSettingsGrid = new GridPane();
+            colSettingsGrid.setHgap(10);
+            colSettingsGrid.setVgap(5);
+
+            var col1 = new ColumnConstraints();
+            col1.setHgrow(Priority.ALWAYS);
+            var col2 = new ColumnConstraints();
+            col2.setHgrow(Priority.SOMETIMES);
+            colSettingsGrid.getColumnConstraints().addAll(col1, col2);
+
+            int row = 0;
+            //skip first column from hiding
+            // todo find out why we should start from 1, but we do not set action column at this moment
+            for (int i = 1; i < columns.size(); i++) {
+                TableColumn<S, ?> col = columns.get(i);
+
+                String colName = ((Label) col.getGraphic().lookup(".label")).getText();
+
+                var toggleSwitch = new ToggleSwitch();
+                toggleSwitch.setSelected(col.isVisible());
+                toggleSwitch.selectedProperty().addListener((obs, oldVal, newVal) -> {
+                    col.setVisible(newVal);
+                });
+
+                var colNameLabel = new Label(colName);
+
+                colSettingsGrid.add(colNameLabel, 0, row);
+                colSettingsGrid.add(toggleSwitch, 1, row);
+                row++;
+            }
+            colSettingsGrid.setPadding(new Insets(20));
+            //todo make this dialogBox depend from Parent Stage
+            // todo style this stage properly, only one close button and white background
+            var stage = new Stage();
+            var scene = new Scene(colSettingsGrid, 300, 200);
+            stage.setScene(scene);
+            stage.show();
+        });
+
+        return menuItem;
+    }
+
+    private MenuItem createExportToCsvMenuItem(List<TableColumn<S, ?>> columns) {
+        var fileChooser = new FileChooser();
+        fileChooser.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("CSV files (*.csv)", "*.csv"));
+
+        var menuItem = new MenuItem("Export to CSV");
+        menuItem.setOnAction(exportToCsvHandler == null ? event -> {
+            File saveFile = fileChooser.showSaveDialog(new Stage());
+            if (saveFile != null) {
+                writeToCsv(saveFile, sortedData, columns);
+            }
+        } : event -> exportToCsvHandler.accept(sortedData));
+        return menuItem;
+    }
+
+    private void writeToCsv(File destFile, List<S> sortedData, List<TableColumn<S, ?>> columns) {
+        var stringBuilder = new StringBuilder();
+        List<List<Object>> dataForExport = getDataForExport(sortedData, columns);
+        for (List<Object> rowData : dataForExport) {
+            for (Object cellVal : rowData) {
+                stringBuilder.append(cellVal.toString()).append(";");
+            }
+            stringBuilder.append(System.lineSeparator());
+        }
+        try {
+            Files.write(destFile.toPath(), stringBuilder.toString().getBytes(StandardCharsets.UTF_8));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public List<List<Object>> getDataForExport(List<S> sortedData, List<TableColumn<S, ?>> columns) {
+        List<List<Object>> result = new ArrayList<>();
+
+        //add first row for csv output
+        result.add(colInfoByName.keySet().stream().map(o -> (Object) o).toList());
+
+        for (S item : sortedData) {
+            List<Object> row = new ArrayList<>();
+            for (int i = 0; i < columns.size(); i++) {
+                //skip first from csv export
+                if (i == 0 && enableRowNumCol) {
+                    continue;
+                }
+                row.add(columns.get(i).getCellData(item));
+            }
+            result.add(row);
+        }
+        return result;
+    }
 }

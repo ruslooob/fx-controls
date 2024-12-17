@@ -6,7 +6,7 @@ import javafx.scene.paint.Color;
 import java.time.format.DateTimeFormatter;
 
 public class Utils {
-    public static final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("MM.dd.yyyy");
+    public static final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy");
 
     /**
      * Пригождается, когда нужно понять, какое пространство занимает элемент.
