@@ -6,7 +6,7 @@ import com.ruslooob.fxcontrols.filters.TextFilterStrategy;
 import com.ruslooob.fxcontrols.filters.date.DateAfterFilterStrategy;
 import com.ruslooob.fxcontrols.filters.date.DateBeforeFilterStrategy;
 import com.ruslooob.fxcontrols.filters.date.DateEqualsFilterStrategy;
-import com.ruslooob.fxcontrols.filters.datetime.DateTimeEqualsFilterStrategy;
+import com.ruslooob.fxcontrols.filters.datetime.TimeEqualsFilterStrategy;
 import com.ruslooob.fxcontrols.filters.enumeration.AllIncludeEnumFilterStrategy;
 import com.ruslooob.fxcontrols.filters.enumeration.EnumFilterStrategy;
 import com.ruslooob.fxcontrols.filters.number.NumberAfterFilterStrategy;
@@ -181,18 +181,17 @@ public class TableViewBuilder<S> {
             }
             case DATE -> {
                 // todo Think about implementing more intelligent filters for search by day, month, and year and some patterns.
-                // This could impact the search speed, making it slower. Maybe implement some trade-off solution, for example DatePatternFilter
+                // This could impact the search speed, making it slower. Maybe implement some trade-off solution, for example DatePatternStrategy
                 var filter = new AdvancedDateFilter();
                 filter.setFilterTypes(List.of(new DateEqualsFilterStrategy(), new DateBeforeFilterStrategy(), new DateAfterFilterStrategy()));
                 return filter;
             }
-            case DATE_TIME -> {
-                var filter = new AdvancedDateTimeFilter();
+            case TIME -> {
+                var filter = new AdvancedTimeFilter();
                 //todo implement later
-                filter.setFilterTypes(List.of(new DateTimeEqualsFilterStrategy()));
+                filter.setFilterTypes(List.of(new TimeEqualsFilterStrategy()));
                 return filter;
             }
-
             case ENUM -> {
                 List<String> filterTypes = (List<String>) colProps.get(ENUM_FILTER_TYPES);
                 if (filterTypes == null) {

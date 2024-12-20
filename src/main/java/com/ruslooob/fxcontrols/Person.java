@@ -3,6 +3,7 @@ package com.ruslooob.fxcontrols;
 import javafx.beans.property.*;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.Objects;
 
 /**
@@ -15,14 +16,22 @@ public class Person {
     private final ObjectProperty<LocalDate> dateOfBirth;
     private final BooleanProperty isEmployed;
     private final StringProperty gender;
+    private final ObjectProperty<LocalTime> createdAt;
 
-    public Person(String firstName, String lastName, Integer height, LocalDate dateOfBirth, boolean isEmployed, String gender) {
+    public Person(String firstName,
+                  String lastName,
+                  Integer height,
+                  LocalDate dateOfBirth,
+                  boolean isEmployed,
+                  String gender,
+                  LocalTime createdAt) {
         this.firstName = new SimpleStringProperty(firstName);
         this.lastName = new SimpleStringProperty(lastName);
         this.height = new SimpleIntegerProperty(height);
         this.dateOfBirth = new SimpleObjectProperty<>(dateOfBirth);
         this.isEmployed = new SimpleBooleanProperty(isEmployed);
         this.gender = new SimpleStringProperty(gender);
+        this.createdAt = new SimpleObjectProperty<>(createdAt);
     }
 
     public StringProperty firstNameProperty() {
@@ -71,6 +80,10 @@ public class Person {
 
     public String getGender() {
         return gender.get();
+    }
+
+    public ObjectProperty<LocalTime> createdAtProperty() {
+        return createdAt;
     }
 
     @Override

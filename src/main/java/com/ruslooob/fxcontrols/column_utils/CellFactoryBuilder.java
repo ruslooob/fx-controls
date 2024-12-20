@@ -13,9 +13,9 @@ import lombok.experimental.FieldDefaults;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 
-import static com.ruslooob.fxcontrols.Utils.dateFormatter;
-import static com.ruslooob.fxcontrols.Utils.dateTimeFormatter;
+import static com.ruslooob.fxcontrols.Utils.*;
 
 // todo подумать над тем, нужно ли это вообще в моей библиотеке. Можно переложить на пользователя ответственность за создание CellValueFactory. Пока оставлю это здесь
 @FieldDefaults(level = AccessLevel.PRIVATE)
@@ -72,6 +72,27 @@ public class CellFactoryBuilder {
                             LocalDateTime date = (LocalDateTime) item;
                             //todo add dateTimeFormatter in map params
                             String cellContent = date.format(dateTimeFormatter);
+                            setText(cellContent);
+                            if (copyContextMenu) {
+                                var contextMenu = new ContextMenu();
+                                contextMenu.getItems().add(createCopyMenuItem(cellContent));
+                                setContextMenu(contextMenu);
+                            }
+                        }
+                    }
+                };
+            }
+            case TIME -> {
+                return column -> new TableCell<>() {
+                    @Override
+                    protected void updateItem(T item, boolean empty) {
+                        super.updateItem(item, empty);
+                        if (empty || item == null) {
+                            setText(null);
+                        } else {
+                            LocalTime date = (LocalTime) item;
+                            //todo add TimeFormatter in map params
+                            String cellContent = date.format(timeFormatter);
                             setText(cellContent);
                             if (copyContextMenu) {
                                 var contextMenu = new ContextMenu();

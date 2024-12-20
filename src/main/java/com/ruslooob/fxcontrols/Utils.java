@@ -8,6 +8,7 @@ import java.time.format.DateTimeFormatter;
 public class Utils {
     public static final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy");
     public static final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy hh:mm");
+    public static final DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("hh:mm");
 
     /**
      * Пригождается, когда нужно понять, какое пространство занимает элемент.

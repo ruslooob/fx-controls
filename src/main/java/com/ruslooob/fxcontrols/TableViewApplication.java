@@ -14,6 +14,7 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -57,6 +58,11 @@ public class TableViewApplication extends Application {
                 .build());
         TableColumn<Person, String> genderCol = createTableColumn("Gender", Person::genderProperty);
 
+        TableColumn<Person, LocalTime> createdAtCol = createTableColumn("Created At", Person::createdAtProperty);
+        createdAtCol.setCellFactory(CellFactoryBuilder.builder()
+                .type(ColumnType.TIME)
+                .build());
+
         var tableView = TableViewBuilder.<Person>builder()
                 .addRowNumColumn()
                 .addColumn(firstNameCol, ColumnType.STRING)
@@ -65,6 +71,7 @@ public class TableViewApplication extends Application {
                 .addColumn(dateOfBirthCol, ColumnType.DATE)
                 .addColumn(isEmployedCol, ColumnType.BOOL)
                 .addColumn(genderCol, ColumnType.ENUM, Map.of(ENUM_FILTER_TYPES, genders))
+                .addColumn(createdAtCol, ColumnType.TIME)
                 .items(data)
                 .build();
 
@@ -91,9 +98,11 @@ public class TableViewApplication extends Application {
                 random.nextInt(150, 210),
                 nextDate(),
                 random.nextBoolean(),
-                nextElem(genders)
+                nextElem(genders),
+                nextTime()
         );
     }
+
     private final static List<String> names = List.of(
             "John", "Alice", "Bob", "Sophia", "Michael", "Emma", "James", "Olivia", "David", "Mia",
             "Daniel", "Isabella", "Matthew", "Charlotte", "Alexander", "Amelia", "Ethan", "Harper",
@@ -120,6 +129,13 @@ public class TableViewApplication extends Application {
         int maxDay = (int) maxDate.toEpochDay();
         long randomDay = minDay + random.nextInt(maxDay - minDay);
         return LocalDate.ofEpochDay(randomDay);
+    }
+
+    private static LocalTime nextTime() {
+        int minSecond = 0; // 00:00:00
+        int maxSecond = 24 * 60 * 60 - 1; // 23:59:59
+        int randomSecond = random.nextInt(minSecond, maxSecond + 1);
+        return LocalTime.ofSecondOfDay(randomSecond);
     }
 
     private static <T> T nextElem(List<T> list) {

@@ -10,5 +10,5 @@ public enum ColumnType {
     DATE,
     ENUM,
     DATE_TIME,
-//    TIME,
+    TIME,
 }
