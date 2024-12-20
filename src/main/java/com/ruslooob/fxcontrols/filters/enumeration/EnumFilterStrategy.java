@@ -1,14 +1,14 @@
 package com.ruslooob.fxcontrols.filters.enumeration;
 
-import com.ruslooob.fxcontrols.filters.TextFilterType;
+import com.ruslooob.fxcontrols.filters.TextFilterStrategy;
 
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-public final class EnumFilter extends TextFilterType<String> {
+public final class EnumFilterStrategy extends TextFilterStrategy<String> {
     private final String value;
 
-    public EnumFilter(String value) {
+    public EnumFilterStrategy(String value) {
         this.value = value;
     }
 

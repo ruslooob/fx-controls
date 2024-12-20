@@ -1,5 +1,6 @@
 package com.ruslooob.fxcontrols;
 
+import com.ruslooob.fxcontrols.column_utils.CellFactoryBuilder;
 import com.ruslooob.fxcontrols.controls.TableViewBuilder;
 import com.ruslooob.fxcontrols.enums.ColumnType;
 import javafx.application.Application;
@@ -8,12 +9,9 @@ import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
-import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
-import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
-import javafx.util.StringConverter;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -22,7 +20,6 @@ import java.util.Map;
 import java.util.Random;
 import java.util.function.Function;
 
-import static com.ruslooob.fxcontrols.Utils.dateFormatter;
 import static com.ruslooob.fxcontrols.enums.PropType.ENUM_FILTER_TYPES;
 import static javafx.collections.FXCollections.observableArrayList;
 
@@ -48,30 +45,16 @@ public class TableViewApplication extends Application {
         TableColumn<Person, Number> heightCol = createTableColumn("Height", Person::heightProperty);
 
         TableColumn<Person, LocalDate> dateOfBirthCol = createTableColumn("Date of Birth", Person::dateOfBirthProperty);
-        dateOfBirthCol.setCellFactory(TextFieldTableCell.forTableColumn(new StringConverter<>() {
-            @Override
-            public String toString(LocalDate date) {
-                return date != null ? date.format(dateFormatter) : "";
-            }
-
-            @Override
-            public LocalDate fromString(String string) {
-                return string != null && !string.isEmpty() ? LocalDate.parse(string, dateFormatter) : null;
-            }
-        }));
+        dateOfBirthCol.setCellFactory(CellFactoryBuilder.builder()
+                .type(ColumnType.DATE)
+                .copyContextMenu()
+                .build());
 
         TableColumn<Person, Boolean> isEmployedCol = createTableColumn("Is Employed", Person::isEmployedProperty);
-        isEmployedCol.setCellFactory(column -> new TableCell<>() {
-            @Override
-            protected void updateItem(Boolean isEmployed, boolean empty) {
-                super.updateItem(isEmployed, empty);
-                if (empty || isEmployed == null) {
-                    setText(null);
-                } else {
-                    setText(isEmployed ? "Да" : "Нет");
-                }
-            }
-        });
+        isEmployedCol.setCellFactory(CellFactoryBuilder.builder()
+                .type(ColumnType.BOOL)
+                .copyContextMenu()
+                .build());
         TableColumn<Person, String> genderCol = createTableColumn("Gender", Person::genderProperty);
 
         var tableView = TableViewBuilder.<Person>builder()

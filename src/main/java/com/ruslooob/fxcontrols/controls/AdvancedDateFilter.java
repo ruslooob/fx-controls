@@ -16,7 +16,6 @@ public class AdvancedDateFilter extends AdvancedFilter<LocalDate> {
     // попробовать найти более удобный datepicker, чтобы можно было выбрать год, месяц и день сразу же
     DatePicker datePicker = new DatePicker();
 
-
     public AdvancedDateFilter() {
         getChildren().addAll(typeComboButton, datePicker);
         datePicker.setEditable(true);
@@ -49,4 +48,8 @@ public class AdvancedDateFilter extends AdvancedFilter<LocalDate> {
         });
     }
 
+    @Override
+    public void clear() {
+        this.datePicker.getEditor().setText("");
+    }
 }

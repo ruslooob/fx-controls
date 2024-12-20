@@ -9,6 +9,6 @@ public enum ColumnType {
     BOOL,
     DATE,
     ENUM,
-//    DATE_TIME,
+    DATE_TIME,
 //    TIME,
 }

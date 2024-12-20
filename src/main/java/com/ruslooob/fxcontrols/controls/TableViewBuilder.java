@@ -2,18 +2,19 @@ package com.ruslooob.fxcontrols.controls;
 
 import com.ruslooob.fxcontrols.enums.ColumnType;
 import com.ruslooob.fxcontrols.enums.PropType;
-import com.ruslooob.fxcontrols.filters.TextFilterType;
-import com.ruslooob.fxcontrols.filters.date.DateAfterFilter;
-import com.ruslooob.fxcontrols.filters.date.DateBeforeFilter;
-import com.ruslooob.fxcontrols.filters.date.DateEqualsFilter;
-import com.ruslooob.fxcontrols.filters.enumeration.AllIncludeEnumFilter;
-import com.ruslooob.fxcontrols.filters.enumeration.EnumFilter;
-import com.ruslooob.fxcontrols.filters.number.NumberAfterFilter;
-import com.ruslooob.fxcontrols.filters.number.NumberBeforeFilter;
-import com.ruslooob.fxcontrols.filters.number.NumberEqualsFilter;
-import com.ruslooob.fxcontrols.filters.string.EqualsFilterType;
-import com.ruslooob.fxcontrols.filters.string.StartsWithFilterType;
-import com.ruslooob.fxcontrols.filters.string.SubstringFilterType;
+import com.ruslooob.fxcontrols.filters.TextFilterStrategy;
+import com.ruslooob.fxcontrols.filters.date.DateAfterFilterStrategy;
+import com.ruslooob.fxcontrols.filters.date.DateBeforeFilterStrategy;
+import com.ruslooob.fxcontrols.filters.date.DateEqualsFilterStrategy;
+import com.ruslooob.fxcontrols.filters.datetime.DateTimeEqualsFilterStrategy;
+import com.ruslooob.fxcontrols.filters.enumeration.AllIncludeEnumFilterStrategy;
+import com.ruslooob.fxcontrols.filters.enumeration.EnumFilterStrategy;
+import com.ruslooob.fxcontrols.filters.number.NumberAfterFilterStrategy;
+import com.ruslooob.fxcontrols.filters.number.NumberBeforeFilterStrategy;
+import com.ruslooob.fxcontrols.filters.number.NumberEqualsFilterStrategy;
+import com.ruslooob.fxcontrols.filters.string.EqualsFilterTypeStrategy;
+import com.ruslooob.fxcontrols.filters.string.StartsWithFilterTypeStrategy;
+import com.ruslooob.fxcontrols.filters.string.SubstringFilterStrategy;
 import com.ruslooob.fxcontrols.model.ColumnInfo;
 import javafx.animation.PauseTransition;
 import javafx.beans.property.Property;
@@ -64,8 +65,6 @@ public class TableViewBuilder<S> {
     private boolean enableRowNumCol = false;
     private ObservableList<S> items;
     private SortedList<S> sortedData;
-    //some properties which can be used while constructing column filters. Map<colName, Map<PropType, Object>>
-    private Map<String, Map<PropType, Object>> props = new HashMap<>();
 
     private final PauseTransition debouncePause = new PauseTransition(Duration.millis(250));
 
@@ -77,14 +76,13 @@ public class TableViewBuilder<S> {
     }
 
     public <T> TableViewBuilder<S> addColumn(TableColumn<S, T> col, ColumnType type) {
-        ColumnInfo<S, T> colInfo = new ColumnInfo<>(col, type);
-        this.colInfoByName.put(colInfo.name(), colInfo);
-        return this;
+        return addColumn(col, type, Collections.emptyMap());
     }
 
     public <T> TableViewBuilder<S> addColumn(TableColumn<S, T> col, ColumnType type, Map<PropType, Object> props) {
-        this.props.put(col.getText(), props);
-        return addColumn(col, type);
+        ColumnInfo<S, T> colInfo = new ColumnInfo<>(col, type, props);
+        this.colInfoByName.put(colInfo.name(), colInfo);
+        return this;
     }
 
     public TableViewBuilder<S> items(ObservableList<S> items) {
@@ -108,7 +106,7 @@ public class TableViewBuilder<S> {
             filterColumnName.setFont(new Font(filterColumnName.getFont().getName(), filterColumnName.getFont().getSize() + 3));
 
             VBox nameWithFilterVbox = new VBox(5);
-            var columnFilter = createColumnFilter(columnInfo.getType(), props.getOrDefault(columnInfo.getName(), new HashMap<>()));
+            var columnFilter = createColumnFilter(columnInfo.getType(), columnInfo.getProps());
             nameWithFilterVbox.setAlignment(Pos.CENTER);
             nameWithFilterVbox.setPadding(new Insets(5));
             nameWithFilterVbox.getChildren().addAll(filterColumnName, columnFilter);
@@ -159,22 +157,22 @@ public class TableViewBuilder<S> {
             case STRING -> {
                 // todo think about constructor pass List<FilterTypes> after creating AdvancedEnumControl
                 var filter = new AdvancedTextFilter<String>();
-                filter.setFilterTypes(List.of(new SubstringFilterType(), new EqualsFilterType(), new StartsWithFilterType()));
+                filter.setFilterTypes(List.of(new SubstringFilterStrategy(), new EqualsFilterTypeStrategy(), new StartsWithFilterTypeStrategy()));
                 return filter;
             }
             case NUMBER -> {
                 var filter = new AdvancedTextFilter<Number>();
-                filter.setFilterTypes(List.of(new NumberEqualsFilter(), new NumberBeforeFilter(), new NumberAfterFilter()));
+                filter.setFilterTypes(List.of(new NumberEqualsFilterStrategy(), new NumberBeforeFilterStrategy(), new NumberAfterFilterStrategy()));
                 return filter;
             }
             case BOOL -> {
                 List<String> filterTypes = (List<String>) colProps.get(BOOLEAN_TYPES);
-                List<TextFilterType<String>> enumFilterTypes;
+                List<TextFilterStrategy<String>> enumFilterTypes;
                 if (filterTypes != null) {
-                    enumFilterTypes = filterTypes.stream().map(EnumFilter::new).map(f -> (TextFilterType<String>) f).collect(Collectors.toList());
-                    enumFilterTypes.add(0, new AllIncludeEnumFilter());
+                    enumFilterTypes = filterTypes.stream().map(EnumFilterStrategy::new).map(f -> (TextFilterStrategy<String>) f).collect(Collectors.toList());
+                    enumFilterTypes.add(0, new AllIncludeEnumFilterStrategy());
                 } else {
-                    enumFilterTypes = List.of(new AllIncludeEnumFilter(), new EnumFilter("Да"), new EnumFilter("Нет"));
+                    enumFilterTypes = List.of(new AllIncludeEnumFilterStrategy(), new EnumFilterStrategy("Да"), new EnumFilterStrategy("Нет"));
                 }
 
                 var filter = new AdvancedEnumFilter();
@@ -185,17 +183,24 @@ public class TableViewBuilder<S> {
                 // todo Think about implementing more intelligent filters for search by day, month, and year and some patterns.
                 // This could impact the search speed, making it slower. Maybe implement some trade-off solution, for example DatePatternFilter
                 var filter = new AdvancedDateFilter();
-                filter.setFilterTypes(List.of(new DateEqualsFilter(), new DateBeforeFilter(), new DateAfterFilter()));
+                filter.setFilterTypes(List.of(new DateEqualsFilterStrategy(), new DateBeforeFilterStrategy(), new DateAfterFilterStrategy()));
                 return filter;
             }
+            case DATE_TIME -> {
+                var filter = new AdvancedDateTimeFilter();
+                //todo implement later
+                filter.setFilterTypes(List.of(new DateTimeEqualsFilterStrategy()));
+                return filter;
+            }
+
             case ENUM -> {
                 List<String> filterTypes = (List<String>) colProps.get(ENUM_FILTER_TYPES);
                 if (filterTypes == null) {
                     throw new IllegalArgumentException("Cannot create enum column filter without prop: %s. Please, pass it via addColumn method.".formatted(ENUM_FILTER_TYPES));
                 }
                 var filter = new AdvancedEnumFilter();
-                List<TextFilterType<String>> enumFilterTypes = filterTypes.stream().map(EnumFilter::new).map(f -> (TextFilterType<String>) f).collect(Collectors.toList());
-                enumFilterTypes.add(0, new AllIncludeEnumFilter());
+                List<TextFilterStrategy<String>> enumFilterTypes = filterTypes.stream().map(EnumFilterStrategy::new).map(f -> (TextFilterStrategy<String>) f).collect(Collectors.toList());
+                enumFilterTypes.add(0, new AllIncludeEnumFilterStrategy());
                 filter.setFilterTypes(enumFilterTypes);
                 return filter;
             }
@@ -224,9 +229,7 @@ public class TableViewBuilder<S> {
                     return ((Predicate<Object>) filterPredicate).test(value);
                 } else {
                     // т.к ColumnType.BOOL реализован через ENUM, то нам нужно преобразовать boolean в String
-                    return ((Predicate<Object>) filterPredicate).test(
-                            mapBoolToString((boolean) value,
-                                    (List<String>) props.getOrDefault(colName, new HashMap<>()).get(BOOLEAN_TYPES)));
+                    return ((Predicate<Object>) filterPredicate).test(mapBoolToString((boolean) value, (List<String>) colInfo.getProps().get(BOOLEAN_TYPES)));
                 }
             };
             resPredicate = resPredicate.and(predicate);
@@ -254,10 +257,9 @@ public class TableViewBuilder<S> {
 
         var menuButton = new MenuButton();
         menuButton.setGraphic(burgerIcon);
-        menuButton.getItems().addAll(
-                createClearFiltersMenuItem(columns),
-                createChangeTableColumnsMenuItem(background, columns),
-                createExportToCsvMenuItem(columns));
+        menuButton.getItems().addAll(createClearFiltersMenuItem(columns),
+                createChangeTableColumnsMenuItem(background,
+                        columns), createExportToCsvMenuItem(background, columns));
 
         col.setGraphic(menuButton);
         col.setSortable(false);
@@ -321,13 +323,13 @@ public class TableViewBuilder<S> {
         return menuItem;
     }
 
-    private MenuItem createExportToCsvMenuItem(List<TableColumn<S, ?>> columns) {
+    private MenuItem createExportToCsvMenuItem(Parent background, List<TableColumn<S, ?>> columns) {
         var fileChooser = new FileChooser();
         fileChooser.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("CSV files (*.csv)", "*.csv"));
 
         var menuItem = new MenuItem("Export to CSV");
         menuItem.setOnAction(exportToCsvHandler == null ? event -> {
-            File saveFile = fileChooser.showSaveDialog(new Stage());
+            File saveFile = fileChooser.showSaveDialog(background.getScene().getWindow());
             if (saveFile != null) {
                 writeToCsv(saveFile, sortedData, columns);
             }

@@ -1,11 +1,11 @@
 package com.ruslooob.fxcontrols.filters.number;
 
-import com.ruslooob.fxcontrols.filters.TextFilterType;
+import com.ruslooob.fxcontrols.filters.TextFilterStrategy;
 
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-public final class NumberAfterFilter extends TextFilterType<Number> {
+public final class NumberAfterFilterStrategy extends TextFilterStrategy<Number> {
     @Override
     public Function<String, Predicate<Number>> createSearchFunction() {
         return search -> input -> {

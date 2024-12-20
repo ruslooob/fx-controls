@@ -1,6 +1,6 @@
 package com.ruslooob.fxcontrols.filters.date;
 
-import com.ruslooob.fxcontrols.filters.TextFilterType;
+import com.ruslooob.fxcontrols.filters.TextFilterStrategy;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
@@ -9,7 +9,7 @@ import java.util.function.Predicate;
 
 import static com.ruslooob.fxcontrols.Utils.dateFormatter;
 
-public final class DateBeforeFilter extends TextFilterType<LocalDate> {
+public final class DateBeforeFilterStrategy extends TextFilterStrategy<LocalDate> {
     @Override
     public Function<String, Predicate<LocalDate>> createSearchFunction() {
         return search -> input -> {

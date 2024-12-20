@@ -1,6 +1,6 @@
 package com.ruslooob.fxcontrols.filters.date;
 
-import com.ruslooob.fxcontrols.filters.TextFilterType;
+import com.ruslooob.fxcontrols.filters.TextFilterStrategy;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
@@ -9,7 +9,7 @@ import java.util.function.Predicate;
 
 import static com.ruslooob.fxcontrols.Utils.dateFormatter;
 
-public final class DateAfterFilter extends TextFilterType<LocalDate> {
+public final class DateEqualsFilterStrategy extends TextFilterStrategy<LocalDate> {
     @Override
     public Function<String, Predicate<LocalDate>> createSearchFunction() {
         return search -> input -> {
@@ -22,17 +22,17 @@ public final class DateAfterFilter extends TextFilterType<LocalDate> {
             } catch (DateTimeParseException e) {
                 return true; // ignore filter if wrong date passed
             }
-            return input.isAfter(searchDate);
+            return input.equals(searchDate);
         };
     }
 
     @Override
     public String toString() {
-        return ">";
+        return "=";
     }
 
     @Override
     public String getTooltipText() {
-        return "Позже чем";
+        return "Является той же датой";
     }
 }
