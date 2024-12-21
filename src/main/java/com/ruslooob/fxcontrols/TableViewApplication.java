@@ -5,6 +5,7 @@ import com.ruslooob.fxcontrols.controls.TableViewBuilder;
 import com.ruslooob.fxcontrols.enums.ColumnType;
 import javafx.application.Application;
 import javafx.beans.property.Property;
+import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
@@ -80,6 +81,11 @@ public class TableViewApplication extends Application {
             Person randomPerson = nextPerson();
             data.add(randomPerson);
 //            tableView.refresh();
+        });
+
+        tableView.getSelectedItems().addListener((ListChangeListener<Person>) c -> {
+            ObservableList<Person> items = tableView.getSelectedItems();
+            System.out.printf("size=%s list=%s%n", items.size(), items);
         });
 
         VBox layout = new VBox(10, tableView, addButton);

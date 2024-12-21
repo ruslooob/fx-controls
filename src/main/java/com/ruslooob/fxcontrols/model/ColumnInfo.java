@@ -5,6 +5,7 @@ import com.ruslooob.fxcontrols.enums.PropType;
 import javafx.beans.property.Property;
 import javafx.scene.control.TableColumn;
 import lombok.AccessLevel;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.experimental.FieldDefaults;
 
@@ -14,6 +15,7 @@ import java.util.function.Function;
 
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Getter
+@EqualsAndHashCode
 public class ColumnInfo<S, T> {
     TableColumn<S, T> column;
     ColumnType type;

@@ -26,7 +26,10 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.control.*;
+import javafx.scene.control.Label;
+import javafx.scene.control.MenuButton;
+import javafx.scene.control.MenuItem;
+import javafx.scene.control.TableColumn;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Priority;
@@ -36,7 +39,8 @@ import javafx.stage.FileChooser;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.util.Duration;
-import lombok.Setter;
+import lombok.AccessLevel;
+import lombok.experimental.FieldDefaults;
 import org.controlsfx.control.ToggleSwitch;
 import org.kordamp.ikonli.fontawesome5.FontAwesomeSolid;
 import org.kordamp.ikonli.javafx.FontIcon;
@@ -56,19 +60,19 @@ import static com.ruslooob.fxcontrols.enums.PropType.ENUM_FILTER_TYPES;
 
 @SuppressWarnings("unchecked")
 //todo add clear all filters button
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class TableViewBuilder<S> {
-    private static final String DEFAULT_BOOL_TRUE_STR = "ДА";
-    private static final String DEFAULT_BOOL_FALSE_STR = "Нет";
+    static final String DEFAULT_BOOL_TRUE_STR = "ДА";
+    static final String DEFAULT_BOOL_FALSE_STR = "Нет";
 
     // метаданные колонок, из которых потом будут строиться колонка с умными фильтрами
-    private Map<String, ColumnInfo<S, ?>> colInfoByName = new LinkedHashMap<>();
-    private boolean enableRowNumCol = false;
-    private ObservableList<S> items;
-    private SortedList<S> sortedData;
+    final List<ColumnInfo<S, ?>> colInfoList = new ArrayList<>();
+    boolean enableRowNumCol = false;
+    ObservableList<S> items;
+    SortedList<S> sortedData;
 
-    private final PauseTransition debouncePause = new PauseTransition(Duration.millis(250));
+    final PauseTransition debouncePause = new PauseTransition(Duration.millis(250));
 
-    @Setter
     private Consumer<List<S>> exportToCsvHandler;
 
     public static <S> TableViewBuilder<S> builder() {
@@ -81,7 +85,7 @@ public class TableViewBuilder<S> {
 
     public <T> TableViewBuilder<S> addColumn(TableColumn<S, T> col, ColumnType type, Map<PropType, Object> props) {
         ColumnInfo<S, T> colInfo = new ColumnInfo<>(col, type, props);
-        this.colInfoByName.put(colInfo.name(), colInfo);
+        this.colInfoList.add(colInfo);
         return this;
     }
 
@@ -95,11 +99,17 @@ public class TableViewBuilder<S> {
         return this;
     }
 
-    public TableView<S> build() {
-        Map<String, AdvancedFilter<?>> filtersByName = new HashMap<>();
-        //create columns
+    public TableViewBuilder<S> exportToCsvHandler(Consumer<List<S>> exportToCsvHandler) {
+        this.exportToCsvHandler = exportToCsvHandler;
+        return this;
+    }
+
+    public AdvancedTableView<S> build() {
+        var filteredData = new FilteredList<>(items, p -> true);
+        Map<ColumnInfo<S, ?>, Predicate<?>> predicateMap = new HashMap<>();
+
         List<TableColumn<S, ?>> columns = new ArrayList<>();
-        for (var columnInfo : colInfoByName.values()) {
+        for (var columnInfo : colInfoList) {
             TableColumn<S, ?> col = columnInfo.getColumn();
             col.setText("");
             Label filterColumnName = new Label(columnInfo.name());
@@ -107,33 +117,27 @@ public class TableViewBuilder<S> {
 
             VBox nameWithFilterVbox = new VBox(5);
             var columnFilter = createColumnFilter(columnInfo.getType(), columnInfo.getProps());
-            nameWithFilterVbox.setAlignment(Pos.CENTER);
-            nameWithFilterVbox.setPadding(new Insets(5));
-            nameWithFilterVbox.getChildren().addAll(filterColumnName, columnFilter);
-
-            col.setGraphic(nameWithFilterVbox);
-            columns.add(col);
-
-            filtersByName.put(columnInfo.name(), columnFilter);
-        }
-        //build predicate logic for filters
-        var filteredData = new FilteredList<>(items, p -> true);
-        Map<String, Predicate<?>> predicateMap = new HashMap<>();
-        for (var columnInfo : colInfoByName.values()) {
-            var filterTextField = filtersByName.get(columnInfo.name());
-            filterTextField.predicateProperty().addListener((obs, oldVal, newVal) -> {
+            columnFilter.predicateProperty().addListener((obs, oldVal, newVal) -> {
                 debouncePause.setOnFinished(event -> {
-                    predicateMap.put(columnInfo.name(), newVal);
+                    predicateMap.put(columnInfo, newVal);
                     filteredData.setPredicate(combinePredicates(predicateMap));
                 });
                 debouncePause.playFromStart();
             });
+
+            nameWithFilterVbox.setAlignment(Pos.CENTER);
+            nameWithFilterVbox.setPadding(new Insets(5));
+            nameWithFilterVbox.getChildren().addAll(filterColumnName, columnFilter);
+            col.setGraphic(nameWithFilterVbox);
+            columns.add(col);
         }
 
-        var tableView = new TableView<S>();
+        var tableView = new AdvancedTableView<S>();
         // todo refactor deep columns pass
         TableColumn<S, Integer> actionCol = createActionsColumn(tableView, columns);
         columns.add(0, actionCol);
+        //todo move this code for creating filters inside AdvancedTableView
+        tableView.setMultiSelect(true);
 
         if (enableRowNumCol) {
             //reuse empty action column for specifying rowNum
@@ -210,12 +214,11 @@ public class TableViewBuilder<S> {
     /**
      * Создает один предикат на основе всех фильтров-предикатов в колонках таблицы
      */
-    private Predicate<S> combinePredicates(Map<String, Predicate<?>> predicateMap) {
+    private Predicate<S> combinePredicates(Map<ColumnInfo<S, ?>, Predicate<?>> predicateMap) {
         Predicate<S> resPredicate = p -> true;
-        for (Map.Entry<String, Predicate<?>> predicateEntry : predicateMap.entrySet()) {
-            String colName = predicateEntry.getKey();
+        for (Map.Entry<ColumnInfo<S, ?>, Predicate<?>> predicateEntry : predicateMap.entrySet()) {
+            ColumnInfo<S, ?> colInfo = predicateEntry.getKey();
             Predicate<?> filterPredicate = predicateEntry.getValue();
-            ColumnInfo<S, ?> colInfo = colInfoByName.get(colName);
             Function<S, ? extends Property<?>> propertyGetter = colInfo.getPropertyGetter();
             // convert table column predicate to generic Predicate<S>
             Predicate<S> predicate = record -> {
@@ -257,8 +260,8 @@ public class TableViewBuilder<S> {
         var menuButton = new MenuButton();
         menuButton.setGraphic(burgerIcon);
         menuButton.getItems().addAll(createClearFiltersMenuItem(columns),
-                createChangeTableColumnsMenuItem(background,
-                        columns), createExportToCsvMenuItem(background, columns));
+                createChangeTableColumnsMenuItem(background, columns),
+                createExportToCsvMenuItem(background, columns));
 
         col.setGraphic(menuButton);
         col.setSortable(false);
@@ -356,7 +359,7 @@ public class TableViewBuilder<S> {
         List<List<Object>> result = new ArrayList<>();
 
         //add first row for csv output
-        result.add(colInfoByName.keySet().stream().map(o -> (Object) o).toList());
+        result.add(colInfoList.stream().map(i -> (Object) i.getName()).toList());
 
         for (S item : sortedData) {
             List<Object> row = new ArrayList<>();
