@@ -1,11 +1,13 @@
 package com.ruslooob.fxcontrols.controls;
 
+import com.ruslooob.fxcontrols.filters.TextFilterStrategy;
 import javafx.scene.control.DatePicker;
 import javafx.util.StringConverter;
 import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -16,7 +18,8 @@ public class AdvancedDateFilter extends AdvancedFilter<LocalDate> {
     // попробовать найти более удобный datepicker, чтобы можно было выбрать год, месяц и день сразу же
     DatePicker datePicker = new DatePicker();
 
-    public AdvancedDateFilter() {
+    public AdvancedDateFilter(List<? extends TextFilterStrategy<LocalDate>> filterTypes) {
+        setFilterTypes(filterTypes);
         getChildren().addAll(typeComboButton, datePicker);
         datePicker.setEditable(true);
         datePicker.setConverter(new StringConverter<>() {

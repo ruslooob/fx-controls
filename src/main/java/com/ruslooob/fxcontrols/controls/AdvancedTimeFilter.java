@@ -1,10 +1,12 @@
 package com.ruslooob.fxcontrols.controls;
 
+import com.ruslooob.fxcontrols.filters.TextFilterStrategy;
 import javafx.scene.control.TextField;
 import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
 
 import java.time.LocalTime;
+import java.util.List;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -14,7 +16,8 @@ public class AdvancedTimeFilter extends AdvancedFilter<LocalTime> {
     // separate date and separate time
     TextField textField = new TextField();
 
-    public AdvancedTimeFilter() {
+    public AdvancedTimeFilter(List<? extends TextFilterStrategy<LocalTime>> filterTypes) {
+        setFilterTypes(filterTypes);
         getChildren().addAll(typeComboButton, textField);
         //change predicate every time filter type was changed
         typeComboButton.valueProperty().addListener((obs, oldVal, newVal) -> {

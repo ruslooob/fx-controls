@@ -1,15 +1,21 @@
 package com.ruslooob.fxcontrols.controls;
 
+import com.ruslooob.fxcontrols.filters.TextFilterStrategy;
 import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
 
+import java.util.List;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class AdvancedEnumFilter extends AdvancedFilter<String> {
+    TextFilterStrategy<String> defaultStrategy;
 
-    public AdvancedEnumFilter() {
+    public AdvancedEnumFilter(List<? extends TextFilterStrategy<String>> filterTypes) {
+        setFilterTypes(filterTypes);
+        defaultStrategy = filterTypes.get(0);
+
         getChildren().add(typeComboButton);
         typeComboButton.setPrefWidth(Integer.MAX_VALUE);
 
@@ -22,8 +28,6 @@ public class AdvancedEnumFilter extends AdvancedFilter<String> {
 
     @Override
     public void clear() {
-        //do nothing
+        typeComboButton.setValue(defaultStrategy);
     }
-
-
 }

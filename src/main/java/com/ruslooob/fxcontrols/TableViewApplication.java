@@ -1,7 +1,7 @@
 package com.ruslooob.fxcontrols;
 
 import com.ruslooob.fxcontrols.column_utils.CellFactoryBuilder;
-import com.ruslooob.fxcontrols.controls.TableViewBuilder;
+import com.ruslooob.fxcontrols.controls.AdvancedTableView;
 import com.ruslooob.fxcontrols.enums.ColumnType;
 import javafx.application.Application;
 import javafx.beans.property.Property;
@@ -13,6 +13,8 @@ import javafx.scene.control.Button;
 import javafx.scene.control.TableColumn;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import lombok.AccessLevel;
+import lombok.experimental.FieldDefaults;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -25,9 +27,10 @@ import java.util.function.Function;
 import static com.ruslooob.fxcontrols.enums.PropType.ENUM_FILTER_TYPES;
 import static javafx.collections.FXCollections.observableArrayList;
 
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class TableViewApplication extends Application {
-    private static Random random = new Random();
-    private static List<String> genders = List.of("М", "Ж", "Undefined");
+    static Random random = new Random();
+    static List<String> genders = List.of("М", "Ж", "Undefined");
 
     public static void main(String[] args) {
         launch();
@@ -64,17 +67,19 @@ public class TableViewApplication extends Application {
                 .type(ColumnType.TIME)
                 .build());
 
-        var tableView = TableViewBuilder.<Person>builder()
-                .addRowNumColumn()
-                .addColumn(firstNameCol, ColumnType.STRING)
-                .addColumn(lastNameCol, ColumnType.STRING)
-                .addColumn(heightCol, ColumnType.NUMBER)
-                .addColumn(dateOfBirthCol, ColumnType.DATE)
-                .addColumn(isEmployedCol, ColumnType.BOOL)
-                .addColumn(genderCol, ColumnType.ENUM, Map.of(ENUM_FILTER_TYPES, genders))
-                .addColumn(createdAtCol, ColumnType.TIME)
-                .items(data)
-                .build();
+        var tableView = new AdvancedTableView<Person>();
+        tableView.addColumn(firstNameCol, ColumnType.STRING);
+        tableView.addColumn(lastNameCol, ColumnType.STRING);
+        tableView.addColumn(heightCol, ColumnType.NUMBER);
+        tableView.addColumn(dateOfBirthCol, ColumnType.DATE);
+        tableView.addColumn(isEmployedCol, ColumnType.BOOL);
+        tableView.addColumn(genderCol, ColumnType.ENUM, Map.of(ENUM_FILTER_TYPES, genders));
+        tableView.addColumn(createdAtCol, ColumnType.TIME);
+
+        tableView.enableRowNumColumn(true);
+        tableView.enableMultiSelect(true);
+
+        tableView.setData(data);
 
         Button addButton = new Button("Add Person");
         addButton.setOnAction(event -> {

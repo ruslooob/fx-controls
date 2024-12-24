@@ -109,6 +109,7 @@ public class ComboButton<T> extends Button {
     }
 
     public void setValue(T value) {
+        //todo fix bug with clear filters with enum datatype, if i set some strategy, not valueProperty changed event fired
         setText(getCellConverter().apply(value));
     }
 

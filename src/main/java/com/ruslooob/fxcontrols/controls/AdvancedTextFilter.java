@@ -1,9 +1,11 @@
 package com.ruslooob.fxcontrols.controls;
 
+import com.ruslooob.fxcontrols.filters.TextFilterStrategy;
 import javafx.scene.control.TextField;
 import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
 
+import java.util.List;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -12,7 +14,8 @@ public class AdvancedTextFilter<T> extends AdvancedFilter<T> {
     //todo add clear button
     TextField textField = new TextField();
 
-    public AdvancedTextFilter() {
+    public AdvancedTextFilter(List<? extends TextFilterStrategy<T>> filterTypes) {
+        setFilterTypes(filterTypes);
         getChildren().addAll(typeComboButton, textField);
         //change predicate every time filter type was changed
         typeComboButton.valueProperty().addListener((obs, oldVal, newVal) -> {
