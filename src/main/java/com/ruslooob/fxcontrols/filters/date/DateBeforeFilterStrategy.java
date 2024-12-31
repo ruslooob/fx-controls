@@ -20,7 +20,7 @@ public final class DateBeforeFilterStrategy extends TextFilterStrategy<LocalDate
             try {
                 searchDate = LocalDate.parse(search, dateFormatter);
             } catch (DateTimeParseException e) {
-                return true; // ignore filter if wrong date passed
+                return false;
             }
             return input.isBefore(searchDate);
         };

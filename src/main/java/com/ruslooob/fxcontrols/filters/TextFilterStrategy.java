@@ -3,7 +3,9 @@ package com.ruslooob.fxcontrols.filters;
 import com.ruslooob.fxcontrols.filters.date.DateAfterFilterStrategy;
 import com.ruslooob.fxcontrols.filters.date.DateBeforeFilterStrategy;
 import com.ruslooob.fxcontrols.filters.date.DateEqualsFilterStrategy;
-import com.ruslooob.fxcontrols.filters.datetime.TimeEqualsFilterStrategy;
+import com.ruslooob.fxcontrols.filters.time.TimeAfterFilterStrategy;
+import com.ruslooob.fxcontrols.filters.time.TimeBeforeFilterStrategy;
+import com.ruslooob.fxcontrols.filters.time.TimeEqualsFilterStrategy;
 import com.ruslooob.fxcontrols.filters.enumeration.AllIncludeEnumFilterStrategy;
 import com.ruslooob.fxcontrols.filters.enumeration.EnumFilterStrategy;
 import com.ruslooob.fxcontrols.filters.number.NumberAfterFilterStrategy;
@@ -18,7 +20,7 @@ import java.util.function.Predicate;
 
 public sealed abstract class TextFilterStrategy<T> permits SubstringFilterStrategy, StartsWithFilterTypeStrategy, EqualsFilterTypeStrategy,
         DateEqualsFilterStrategy, DateBeforeFilterStrategy, DateAfterFilterStrategy,
-        TimeEqualsFilterStrategy,
+        TimeEqualsFilterStrategy, TimeBeforeFilterStrategy, TimeAfterFilterStrategy,
         NumberEqualsFilterStrategy, NumberBeforeFilterStrategy, NumberAfterFilterStrategy,
         EnumFilterStrategy, AllIncludeEnumFilterStrategy {
     public abstract Function<String, Predicate<T>> createSearchFunction();

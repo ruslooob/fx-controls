@@ -1,8 +1,6 @@
 package com.ruslooob.fxcontrols.controls;
 
 import com.ruslooob.fxcontrols.filters.TextFilterStrategy;
-import javafx.scene.control.DatePicker;
-import javafx.util.StringConverter;
 import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
 
@@ -11,41 +9,27 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-import static com.ruslooob.fxcontrols.Utils.dateFormatter;
-
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class AdvancedDateFilter extends AdvancedFilter<LocalDate> {
-    // попробовать найти более удобный datepicker, чтобы можно было выбрать год, месяц и день сразу же
-    DatePicker datePicker = new DatePicker();
+    MaskedTextField dateTextField = new MaskedTextField("##.##.####");
 
     public AdvancedDateFilter(List<? extends TextFilterStrategy<LocalDate>> filterTypes) {
         setFilterTypes(filterTypes);
-        getChildren().addAll(typeComboButton, datePicker);
-        datePicker.setEditable(true);
-        datePicker.setConverter(new StringConverter<>() {
-            @Override
-            public String toString(LocalDate date) {
-                return date == null ? "" : dateFormatter.format(date);
-            }
-
-            @Override
-            public LocalDate fromString(String str) {
-                try {
-                    return LocalDate.parse(str, dateFormatter);
-                } catch (NumberFormatException e) {
-                    return null;
-                }
-            }
-        });
+        getChildren().addAll(typeComboButton, dateTextField);
 
         //change predicate every time filter type was changed
         typeComboButton.valueProperty().addListener((obs, oldVal, newVal) -> {
             Function<String, Predicate<LocalDate>> searchFunction = newVal.createSearchFunction();
-            predicateProperty.setValue(searchFunction.apply(datePicker.getEditor().getText()));
+            predicateProperty.setValue(searchFunction.apply(dateTextField.getText()));
         });
 
         //also change predicate every time text in filter was changed
-        datePicker.editorProperty().get().textProperty().addListener((obs, oldVal, newVal) -> {
+        dateTextField.textProperty().addListener((obs, oldVal, newVal) -> {
+            // check that user input full time before creating search function
+            if (dateTextField.getPlainText().length() < 8) {
+                predicateProperty.setValue(o -> true);
+                return;
+            }
             Function<String, Predicate<LocalDate>> searchFunction = typeComboButton.getValue().createSearchFunction();
             predicateProperty.setValue(searchFunction.apply(newVal));
         });
@@ -53,6 +37,6 @@ public class AdvancedDateFilter extends AdvancedFilter<LocalDate> {
 
     @Override
     public void clear() {
-        this.datePicker.getEditor().setText("");
+        this.dateTextField.setText("");
     }
 }

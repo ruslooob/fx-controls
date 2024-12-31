@@ -108,11 +108,6 @@ public class ComboButton<T> extends Button {
         return cellTooltipConverterProperty;
     }
 
-    public void setValue(T value) {
-        //todo fix bug with clear filters with enum datatype, if i set some strategy, not valueProperty changed event fired
-        setText(getCellConverter().apply(value));
-    }
-
     /**
      * Вставляет фильтры в меню выбора, а также выбирает первый элемент в списке в качестве выбранного
      */
@@ -121,8 +116,7 @@ public class ComboButton<T> extends Button {
             throw new IllegalArgumentException("Некорректное значение элементов для ComboButton: %s".formatted(values));
         }
         listView.getItems().setAll(values);
-        setValue(values.get(0));
-        listView.getSelectionModel().selectFirst();
+        resetToDefault();
     }
 
     public ReadOnlyObjectProperty<T> valueProperty() {
@@ -131,5 +125,11 @@ public class ComboButton<T> extends Button {
 
     public T getValue() {
         return valueProperty().getValue();
+    }
+
+    public void resetToDefault() {
+        T first = listView.getItems().get(0);
+        listView.getSelectionModel().select(first);
+        setText(getCellConverter().apply(first));
     }
 }

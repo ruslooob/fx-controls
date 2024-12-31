@@ -28,6 +28,6 @@ public class AdvancedEnumFilter extends AdvancedFilter<String> {
 
     @Override
     public void clear() {
-        typeComboButton.setValue(defaultStrategy);
+        typeComboButton.resetToDefault();
     }
 }

@@ -11,6 +11,7 @@ import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.TableColumn;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import lombok.AccessLevel;
@@ -93,7 +94,8 @@ public class TableViewApplication extends Application {
             System.out.printf("size=%s list=%s%n", items.size(), items);
         });
 
-        VBox layout = new VBox(10, tableView, addButton);
+        HBox statusLine = Utils.createStatusLine(tableView);
+        VBox layout = new VBox(10, tableView, statusLine, addButton);
         layout.setPadding(new Insets(10));
 
         Scene scene = new Scene(layout, 1500, 600);

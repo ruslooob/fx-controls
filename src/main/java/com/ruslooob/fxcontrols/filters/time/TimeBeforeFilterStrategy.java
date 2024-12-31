@@ -1,38 +1,41 @@
-package com.ruslooob.fxcontrols.filters.date;
+package com.ruslooob.fxcontrols.filters.time;
 
 import com.ruslooob.fxcontrols.filters.TextFilterStrategy;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.time.format.DateTimeParseException;
+import java.time.temporal.ChronoUnit;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
 import static com.ruslooob.fxcontrols.Utils.dateFormatter;
+import static com.ruslooob.fxcontrols.Utils.timeFormatter;
 
-public final class DateEqualsFilterStrategy extends TextFilterStrategy<LocalDate> {
+public final class TimeBeforeFilterStrategy extends TextFilterStrategy<LocalTime> {
     @Override
-    public Function<String, Predicate<LocalDate>> createSearchFunction() {
+    public Function<String, Predicate<LocalTime>> createSearchFunction() {
         return search -> input -> {
             if (search == null || search.isBlank()) {
                 return true;
             }
-            LocalDate searchDate;
+            LocalTime searchTime;
             try {
-                searchDate = LocalDate.parse(search, dateFormatter);
+                searchTime = LocalTime.parse(search, timeFormatter);
             } catch (DateTimeParseException e) {
                 return false;
             }
-            return input.equals(searchDate);
+            return input.truncatedTo(ChronoUnit.MINUTES).isBefore(searchTime.truncatedTo(ChronoUnit.MINUTES));
         };
     }
 
     @Override
     public String toString() {
-        return "=";
+        return "<";
     }
 
     @Override
     public String getTooltipText() {
-        return "Является той же датой";
+        return "Раньше чем";
     }
 }

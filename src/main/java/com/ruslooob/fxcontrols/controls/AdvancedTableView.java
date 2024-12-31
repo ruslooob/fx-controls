@@ -7,7 +7,6 @@ import com.ruslooob.fxcontrols.filters.TextFilterStrategy;
 import com.ruslooob.fxcontrols.filters.date.DateAfterFilterStrategy;
 import com.ruslooob.fxcontrols.filters.date.DateBeforeFilterStrategy;
 import com.ruslooob.fxcontrols.filters.date.DateEqualsFilterStrategy;
-import com.ruslooob.fxcontrols.filters.datetime.TimeEqualsFilterStrategy;
 import com.ruslooob.fxcontrols.filters.enumeration.AllIncludeEnumFilterStrategy;
 import com.ruslooob.fxcontrols.filters.enumeration.EnumFilterStrategy;
 import com.ruslooob.fxcontrols.filters.number.NumberAfterFilterStrategy;
@@ -16,6 +15,9 @@ import com.ruslooob.fxcontrols.filters.number.NumberEqualsFilterStrategy;
 import com.ruslooob.fxcontrols.filters.string.EqualsFilterTypeStrategy;
 import com.ruslooob.fxcontrols.filters.string.StartsWithFilterTypeStrategy;
 import com.ruslooob.fxcontrols.filters.string.SubstringFilterStrategy;
+import com.ruslooob.fxcontrols.filters.time.TimeAfterFilterStrategy;
+import com.ruslooob.fxcontrols.filters.time.TimeBeforeFilterStrategy;
+import com.ruslooob.fxcontrols.filters.time.TimeEqualsFilterStrategy;
 import com.ruslooob.fxcontrols.model.ColumnInfo;
 import javafx.animation.PauseTransition;
 import javafx.beans.property.Property;
@@ -222,8 +224,8 @@ public class AdvancedTableView<S> extends TableView<S> {
         for (S item : sortedData) {
             List<Object> row = new ArrayList<>();
             for (int i = 0; i < columns.size(); i++) {
-                //skip first from csv export
-                if (i == 0 && enableRowNumCol) {
+                //skip unnecessary columns
+                if (i == 0 || (enableMultiSelect && i == 1)) {
                     continue;
                 }
                 row.add(columns.get(i).getCellData(item));
@@ -288,8 +290,7 @@ public class AdvancedTableView<S> extends TableView<S> {
                 return new AdvancedDateFilter(List.of(new DateEqualsFilterStrategy(), new DateBeforeFilterStrategy(), new DateAfterFilterStrategy()));
             }
             case TIME -> {
-                //todo implement more filters later
-                return new AdvancedTimeFilter(List.of(new TimeEqualsFilterStrategy()));
+                return new AdvancedTimeFilter(List.of(new TimeEqualsFilterStrategy(), new TimeBeforeFilterStrategy(), new TimeAfterFilterStrategy()));
             }
             case ENUM -> {
                 List<String> filterTypes = (List<String>) colProps.get(ENUM_FILTER_TYPES);
@@ -353,7 +354,7 @@ public class AdvancedTableView<S> extends TableView<S> {
 
     private TableColumn<S, Boolean> createCheckBoxColumn(String columnName, ObservableList<S> selectedItems) {
         TableColumn<S, Boolean> checkBoxColumn = new TableColumn<>(columnName);
-
+        //todo add check all column
         checkBoxColumn.setCellFactory(tc -> new TableCell<>() {
             private final CheckBox checkBox = new CheckBox();
 

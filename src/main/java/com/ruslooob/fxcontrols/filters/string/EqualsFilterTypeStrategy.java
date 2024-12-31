@@ -8,7 +8,7 @@ import java.util.function.Predicate;
 public final class EqualsFilterTypeStrategy extends TextFilterStrategy<String> {
     @Override
     public Function<String, Predicate<String>> createSearchFunction() {
-        return search -> input -> input.equalsIgnoreCase(search);
+        return search -> input -> search.isBlank() || input.equalsIgnoreCase(search);
     }
 
     @Override
