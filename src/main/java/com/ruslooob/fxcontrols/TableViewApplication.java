@@ -20,7 +20,6 @@ import lombok.experimental.FieldDefaults;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Random;
 import java.util.function.Function;
@@ -39,8 +38,6 @@ public class TableViewApplication extends Application {
 
     @Override
     public void start(Stage stage) {
-        // Используется в некоторых контролах, например DatePicker
-        Locale.setDefault(Locale.forLanguageTag("ru-RU"));
         ObservableList<Person> data = observableArrayList();
         //таблица нормально работает на 100_000 записях
         for (int i = 0; i < 1_000; i++) {
@@ -51,22 +48,22 @@ public class TableViewApplication extends Application {
         TableColumn<Person, Number> heightCol = createTableColumn("Height", Person::heightProperty);
 
         TableColumn<Person, LocalDate> dateOfBirthCol = createTableColumn("Date of Birth", Person::dateOfBirthProperty);
-        dateOfBirthCol.setCellFactory(CellFactoryBuilder.builder()
-                .type(ColumnType.DATE)
-                .copyContextMenu()
-                .build());
+        dateOfBirthCol.setCellFactory(
+                CellFactoryBuilder.withType(ColumnType.DATE)
+                        .copyContextMenu()
+                        .build());
 
         TableColumn<Person, Boolean> isEmployedCol = createTableColumn("Is Employed", Person::isEmployedProperty);
-        isEmployedCol.setCellFactory(CellFactoryBuilder.builder()
-                .type(ColumnType.BOOL)
-                .copyContextMenu()
-                .build());
+        isEmployedCol.setCellFactory(
+                CellFactoryBuilder.withType(ColumnType.BOOL)
+                        .copyContextMenu()
+                        .build());
         TableColumn<Person, String> genderCol = createTableColumn("Gender", Person::genderProperty);
 
         TableColumn<Person, LocalTime> createdAtCol = createTableColumn("Created At", Person::createdAtProperty);
-        createdAtCol.setCellFactory(CellFactoryBuilder.builder()
-                .type(ColumnType.TIME)
-                .build());
+        createdAtCol.setCellFactory(
+                CellFactoryBuilder.withType(ColumnType.TIME)
+                        .build());
 
         var tableView = new AdvancedTableView<Person>();
         tableView.addColumn(firstNameCol, ColumnType.STRING);

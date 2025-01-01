@@ -26,7 +26,7 @@ public class ComboButton<T> extends Button {
     ListView<T> listView = new ListView<>();
     ObjectProperty<Function<T, String>> cellConverterProperty = new SimpleObjectProperty<>(Object::toString);
     //todo add tooltip on current selected item
-    ObjectProperty<Function<T, String>> cellTooltipConverterProperty = new SimpleObjectProperty<>(Object::toString);
+    ObjectProperty<Function<T, String>> cellTooltipConverterProperty = new SimpleObjectProperty<>(o -> null);
 
     public ComboButton() {
         setMinWidth(50);
@@ -72,15 +72,17 @@ public class ComboButton<T> extends Button {
         });
 
         //change current selected item if new listview item selected
-        listView.setOnMouseClicked(event -> {
+        listView.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
             T selectedItem = listView.getSelectionModel().getSelectedItem();
             if (selectedItem != null) {
                 setText(getCellConverter().apply(selectedItem));
                 popup.hide();
+
+                setTooltip(selectedItem);
             }
         });
 
-        //update selected item while cellConverterProperty has changed
+        //update selected item while cellConverter has changed
         cellConverterProperty.addListener((obs, oldVal, newVal) -> {
             setText(newVal.apply(listView.getSelectionModel().getSelectedItem() == null
                     ? listView.getItems().get(0)
@@ -92,12 +94,16 @@ public class ComboButton<T> extends Button {
         return cellConverterProperty.get();
     }
 
-    public void setCellConverter(Function<T, String> cellConverterProperty) {
-        this.cellConverterProperty.setValue(cellConverterProperty);
+    public void setCellConverter(Function<T, String> cellConverter) {
+        this.cellConverterProperty.setValue(cellConverter);
     }
 
     public void setCellTooltipConverter(Function<T, String> cellTooltipConverter) {
         this.cellTooltipConverterProperty.setValue(cellTooltipConverter);
+        T selectedItem = listView.getSelectionModel().getSelectedItem();
+        if (selectedItem != null) {
+            setTooltip(selectedItem);
+        }
     }
 
     public Function<T, String> getCellTooltipConverter() {
@@ -106,6 +112,13 @@ public class ComboButton<T> extends Button {
 
     public ObjectProperty<Function<T, String>> cellTooltipConverterProperty() {
         return cellTooltipConverterProperty;
+    }
+
+    private void setTooltip(T selectedItem) {
+        String tooltipText = getCellTooltipConverter().apply(selectedItem);
+        if (tooltipText != null && !tooltipText.isBlank()) {
+            setTooltip(new Tooltip(tooltipText));
+        }
     }
 
     /**

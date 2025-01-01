@@ -54,7 +54,7 @@ public class MaskedTextField extends TextField {
 
     private void init() {
         buildSemanticMask();
-        updateSemanticMask("");
+//        updateSemanticMask("");
 
         // When MaskedTextField gains focus caret goes to first placeholder position
         focusedProperty().addListener((observable, oldValue, newValue) -> {

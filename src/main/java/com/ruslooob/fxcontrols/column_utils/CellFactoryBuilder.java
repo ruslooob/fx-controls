@@ -24,13 +24,10 @@ public class CellFactoryBuilder {
     boolean copyContextMenu = false;
     Clipboard clipboard = Clipboard.getSystemClipboard();
 
-    public CellFactoryBuilder type(ColumnType type) {
-        this.type = type;
-        return this;
-    }
-
-    public static CellFactoryBuilder builder() {
-        return new CellFactoryBuilder();
+    public static CellFactoryBuilder withType(ColumnType type) {
+        var builder = new CellFactoryBuilder();
+        builder.type = type;
+        return builder;
     }
 
     public CellFactoryBuilder copyContextMenu() {
