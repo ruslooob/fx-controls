@@ -1,4 +1,4 @@
-package com.ruslooob.fxcontrols;
+package com.ruslooob.fxcontrols.utils;
 
 import com.ruslooob.fxcontrols.controls.AdvancedTableView;
 import javafx.collections.ListChangeListener;

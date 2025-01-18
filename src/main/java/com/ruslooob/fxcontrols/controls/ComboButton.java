@@ -23,6 +23,7 @@ public class ComboButton<T> extends Button {
 
     Popup popup = new Popup();
     //todo add enter to submit current selection
+    //todo add arrow keys to navigate between items
     ListView<T> listView = new ListView<>();
     ObjectProperty<Function<T, String>> cellConverterProperty = new SimpleObjectProperty<>(Object::toString);
     //todo add tooltip on current selected item

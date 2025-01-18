@@ -1,18 +1,17 @@
 package com.ruslooob.fxcontrols;
 
-import com.ruslooob.fxcontrols.column_utils.CellFactoryBuilder;
 import com.ruslooob.fxcontrols.controls.AdvancedTableView;
 import com.ruslooob.fxcontrols.enums.ColumnType;
+import com.ruslooob.fxcontrols.model.PaginationInfo;
+import com.ruslooob.fxcontrols.utils.CellFactoryBuilder;
+import com.ruslooob.fxcontrols.utils.Pagination;
 import javafx.application.Application;
 import javafx.beans.property.Property;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
-import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.TableColumn;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
@@ -22,6 +21,7 @@ import java.time.LocalTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.UUID;
 import java.util.function.Function;
 
 import static com.ruslooob.fxcontrols.enums.PropType.ENUM_FILTER_TYPES;
@@ -38,14 +38,11 @@ public class TableViewApplication extends Application {
 
     @Override
     public void start(Stage stage) {
-        ObservableList<Person> data = observableArrayList();
-        //таблица нормально работает на 100_000 записях
-        for (int i = 0; i < 1_000; i++) {
-            data.add(nextPerson());
-        }
         TableColumn<Person, String> firstNameCol = createTableColumn("First Name", Person::firstNameProperty);
         TableColumn<Person, String> lastNameCol = createTableColumn("Last Name", Person::lastNameProperty);
         TableColumn<Person, Number> heightCol = createTableColumn("Height", Person::heightProperty);
+        TableColumn<Person, String> infoCol = createTableColumn("Info", Person::infoColProperty);
+
 
         TableColumn<Person, LocalDate> dateOfBirthCol = createTableColumn("Date of Birth", Person::dateOfBirthProperty);
         dateOfBirthCol.setCellFactory(
@@ -69,6 +66,7 @@ public class TableViewApplication extends Application {
         tableView.addColumn(firstNameCol, ColumnType.STRING);
         tableView.addColumn(lastNameCol, ColumnType.STRING);
         tableView.addColumn(heightCol, ColumnType.NUMBER);
+        tableView.addColumn(infoCol, ColumnType.STRING);
         tableView.addColumn(dateOfBirthCol, ColumnType.DATE);
         tableView.addColumn(isEmployedCol, ColumnType.BOOL);
         tableView.addColumn(genderCol, ColumnType.ENUM, Map.of(ENUM_FILTER_TYPES, genders));
@@ -77,6 +75,7 @@ public class TableViewApplication extends Application {
         tableView.enableRowNumColumn(true);
         tableView.enableMultiSelect(true);
 
+        ObservableList<Person> data = observableArrayList(createDataSample(100_000));
         tableView.setData(data);
 
         Button addButton = new Button("Add Person");
@@ -91,25 +90,44 @@ public class TableViewApplication extends Application {
             System.out.printf("size=%s list=%s%n", items.size(), items);
         });
 
-        HBox statusLine = Utils.createStatusLine(tableView);
-        VBox layout = new VBox(10, tableView, statusLine, addButton);
-        layout.setPadding(new Insets(10));
+//        HBox statusLine = Utils.createStatusLine(tableView);
+//        VBox layout = new VBox(10, tableView, statusLine, addButton);
+//        layout.setPadding(new Insets(10));
 
-        Scene scene = new Scene(layout, 1500, 600);
+        Pagination<Person, Long> paginationTable = new Pagination<>(tableView,
+                new PaginationInfo<>(Person::getId,
+                        (pageSize, lastId) -> createDataSample(pageSize),
+                        (pageSize, lastId) -> createDataSample(pageSize)),
+                100);
+
+        Scene scene = new Scene(paginationTable, 1500, 600);
         stage.setScene(scene);
         stage.setTitle("TableView with Inline Filters");
         stage.show();
     }
 
+    private static ObservableList<Person> createDataSample(int size) {
+        ObservableList<Person> data = observableArrayList();
+        //таблица нормально работает на 100_000 записях
+        for (int i = 0; i < size; i++) {
+            data.add(nextPerson());
+        }
+        return data;
+    }
+
+    static long currId = 0;
+
     private static Person nextPerson() {
         return new Person(
+                currId++,
                 nextElem(names) + random.nextInt(0, 100),
                 nextElem(surnames) + random.nextInt(0, 100),
                 random.nextInt(150, 210),
                 nextDate(),
                 random.nextBoolean(),
                 nextElem(genders),
-                nextTime()
+                nextTime(),
+                UUID.randomUUID().toString()
         );
     }
 

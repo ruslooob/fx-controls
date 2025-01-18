@@ -1,4 +1,4 @@
-package com.ruslooob.fxcontrols.column_utils;
+package com.ruslooob.fxcontrols.utils;
 
 import com.ruslooob.fxcontrols.enums.ColumnType;
 import javafx.scene.control.ContextMenu;
@@ -15,14 +15,14 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 
-import static com.ruslooob.fxcontrols.Utils.*;
+import static com.ruslooob.fxcontrols.utils.Utils.*;
 
 // todo подумать над тем, нужно ли это вообще в моей библиотеке. Можно переложить на пользователя ответственность за создание CellValueFactory. Пока оставлю это здесь
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class CellFactoryBuilder {
     ColumnType type;
     boolean copyContextMenu = false;
-    Clipboard clipboard = Clipboard.getSystemClipboard();
+    final Clipboard clipboard = Clipboard.getSystemClipboard();
 
     public static CellFactoryBuilder withType(ColumnType type) {
         var builder = new CellFactoryBuilder();

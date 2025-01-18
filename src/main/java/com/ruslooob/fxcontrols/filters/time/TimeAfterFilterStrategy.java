@@ -8,7 +8,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-import static com.ruslooob.fxcontrols.Utils.timeFormatter;
+import static com.ruslooob.fxcontrols.utils.Utils.timeFormatter;
 
 public final class TimeAfterFilterStrategy extends TextFilterStrategy<LocalTime> {
     @Override

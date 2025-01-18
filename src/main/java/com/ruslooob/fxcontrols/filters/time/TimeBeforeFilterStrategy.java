@@ -2,15 +2,13 @@ package com.ruslooob.fxcontrols.filters.time;
 
 import com.ruslooob.fxcontrols.filters.TextFilterStrategy;
 
-import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoUnit;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-import static com.ruslooob.fxcontrols.Utils.dateFormatter;
-import static com.ruslooob.fxcontrols.Utils.timeFormatter;
+import static com.ruslooob.fxcontrols.utils.Utils.timeFormatter;
 
 public final class TimeBeforeFilterStrategy extends TextFilterStrategy<LocalTime> {
     @Override

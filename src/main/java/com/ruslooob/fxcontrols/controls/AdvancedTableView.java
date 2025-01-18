@@ -21,18 +21,14 @@ import com.ruslooob.fxcontrols.filters.time.TimeEqualsFilterStrategy;
 import com.ruslooob.fxcontrols.model.ColumnInfo;
 import javafx.animation.PauseTransition;
 import javafx.beans.property.Property;
-import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
-import javafx.collections.transformation.SortedList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.layout.ColumnConstraints;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.VBox;
+import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.*;
 import javafx.scene.text.Font;
 import javafx.stage.FileChooser;
 import javafx.stage.Modality;
@@ -66,33 +62,39 @@ public class AdvancedTableView<S> extends TableView<S> {
     static final String DEFAULT_BOOL_FALSE_STR = "Нет";
 
     final ObservableList<S> items = observableArrayList();
-    final FilteredList<S> filteredData;
-    final SortedList<S> sortedData;
+    final ObservableList<S> sortedItems = observableArrayList();
+    final FilteredList<S> filteredItems;
     @Getter
     final ObservableList<S> selectedItems = observableArrayList();
 
     boolean enableRowNumCol = false;
     boolean enableMultiSelect = false;
     // Some basic info about columns
-    final List<ColumnInfo<S, ?>> colsInfo = new ArrayList<>();
+    final List<ColumnInfo<S, ?>> colsInfo = new ArrayList<>();//todo add sort type enum that was apply after checking sort buttons in table header
     // Contains all predicate filters in columns
+    //fixme varialbe can be local
     final Map<ColumnInfo<S, ?>, Predicate<?>> predicateMap = new HashMap<>();
     @Setter
     Consumer<List<S>> exportToCsvHandler;
 
+    static final FontIcon sortUpIcon = new FontIcon(FontAwesomeSolid.SORT_UP);
+    static final FontIcon sortDownIcon = new FontIcon(FontAwesomeSolid.SORT_DOWN);
+
     final PauseTransition debouncePause = new PauseTransition(Duration.millis(250));
 
     public AdvancedTableView() {
-        filteredData = new FilteredList<>(items, p -> true);
-        sortedData = new SortedList<>(filteredData);
-        sortedData.comparatorProperty().bind(comparatorProperty());
-        setItems(sortedData);
+        filteredItems = new FilteredList<>(sortedItems, p -> true);
+        setItems(filteredItems);
 
         getColumns().add(0, createActionsColumn());
+
+        sortUpIcon.setIconSize(21);
+        sortDownIcon.setIconSize(21);
     }
 
     public void setData(ObservableList<S> items) {
         this.items.setAll(items);
+        this.sortedItems.setAll(observableArrayList(items));
     }
 
     public void clearData(ObservableList<S> items) {
@@ -127,8 +129,8 @@ public class AdvancedTableView<S> extends TableView<S> {
                     continue;
                 }
                 TableColumn<S, ?> column = columns.get(i);
-                // todo fix this double cast
-                AdvancedFilter<?> filter = (AdvancedFilter<?>) ((VBox) column.getGraphic()).getChildren().get(1);
+                // todo fix this triple cast. May be rewrite this as class
+                AdvancedFilter<?> filter = (AdvancedFilter<?>) ((HBox) ((VBox) column.getGraphic()).getChildren().get(1)).getChildren().get(0);
                 filter.clear();
             }
         });
@@ -191,9 +193,9 @@ public class AdvancedTableView<S> extends TableView<S> {
         menuItem.setOnAction(exportToCsvHandler == null ? event -> {
             File saveFile = fileChooser.showSaveDialog(this.getScene().getWindow());
             if (saveFile != null) {
-                writeToCsv(saveFile, sortedData);
+                writeToCsv(saveFile, filteredItems);
             }
-        } : event -> exportToCsvHandler.accept(sortedData));
+        } : event -> exportToCsvHandler.accept(filteredItems));
         return menuItem;
     }
 
@@ -244,23 +246,74 @@ public class AdvancedTableView<S> extends TableView<S> {
         this.colsInfo.add(columnInfo);
 
         col.setText("");
-        Label filterColumnName = new Label(columnInfo.name());
+        //remove unnecessary default behavior with sorting
+        col.setSortable(false);
+        col.setSortType(null);
+
+        var filterColumnName = new Label(columnInfo.name());
         filterColumnName.setFont(new Font(filterColumnName.getFont().getName(), filterColumnName.getFont().getSize() + 3));
 
-        VBox nameWithFilterVbox = new VBox(5);
-        var columnFilter = createColumnFilter(columnInfo.getType(), columnInfo.getProps());
+        AdvancedFilter<?> columnFilter = createColumnFilter(columnInfo.getColumnType(), columnInfo.getProps());
         columnFilter.predicateProperty().addListener((obs, oldVal, newVal) -> {
             debouncePause.setOnFinished(event -> {
                 predicateMap.put(columnInfo, newVal);
-                filteredData.setPredicate(combinePredicates());
+                filteredItems.setPredicate(combinePredicates());
             });
             debouncePause.playFromStart();
         });
 
+        var nameWithFilterVbox = new VBox(5);
         nameWithFilterVbox.setAlignment(Pos.CENTER);
         nameWithFilterVbox.setPadding(new Insets(5));
-        nameWithFilterVbox.getChildren().addAll(filterColumnName, columnFilter);
+
+        var filterWithSort = new HBox(5, columnFilter);
+        nameWithFilterVbox.getChildren().addAll(filterColumnName, filterWithSort);
         col.setGraphic(nameWithFilterVbox);
+        filterWithSort.setAlignment(Pos.CENTER);
+        if (columnInfo.isSortable()) {
+            Function<S, ? extends Property<?>> propertyGetter = columnInfo.getPropertyGetter();
+            Comparator<S> ascComparator = (r1, r2) -> {
+                Comparable value1 = (Comparable<?>) propertyGetter.apply(r1).getValue();
+                Comparable value2 = (Comparable<?>) propertyGetter.apply(r2).getValue();
+                return value1.compareTo(value2);
+            };
+            Comparator<S> descComparator = (r1, r2) -> {
+                Comparable value1 = (Comparable<?>) propertyGetter.apply(r1).getValue();
+                Comparable value2 = (Comparable<?>) propertyGetter.apply(r2).getValue();
+                return value2.compareTo(value1);
+            };
+
+            col.sortTypeProperty().addListener((obs, oldSortType, newSortType) -> {
+                if (newSortType == TableColumn.SortType.ASCENDING) {
+                    sortedItems.sort(ascComparator);
+                    filterWithSort.getChildren().add(sortUpIcon);
+                } else if (newSortType == TableColumn.SortType.DESCENDING) {
+                    sortedItems.sort(descComparator);
+                    filterWithSort.getChildren().remove(1);
+                    filterWithSort.getChildren().add(sortDownIcon);
+                } else {
+                    sortedItems.setAll(items);
+                    filterWithSort.getChildren().remove(1);
+                }
+            });
+
+            col.getGraphic().addEventHandler(MouseEvent.MOUSE_RELEASED, event -> {
+                colsInfo.forEach(info -> {
+                    //reset other columns
+                    if (!info.getColumn().equals(col)) {
+                        info.getColumn().setSortType(null);
+                    }
+                });
+                //toggle sorting
+                if (col.getSortType() == null) {
+                    col.setSortType(TableColumn.SortType.ASCENDING);
+                } else if (col.getSortType() == TableColumn.SortType.ASCENDING) {
+                    col.setSortType(TableColumn.SortType.DESCENDING);
+                } else {
+                    col.setSortType(null);
+                }
+            });
+        }
         getColumns().add(col);
     }
 
@@ -321,7 +374,7 @@ public class AdvancedTableView<S> extends TableView<S> {
                     return false;
                 }
                 Object value = property.getValue();
-                if (colInfo.getType() != ColumnType.BOOL) {
+                if (colInfo.getColumnType() != ColumnType.BOOL) {
                     return ((Predicate<Object>) filterPredicate).test(value);
                 } else {
                     // т.к ColumnType.BOOL реализован через ENUM, то нам нужно преобразовать boolean в String
@@ -376,11 +429,12 @@ public class AdvancedTableView<S> extends TableView<S> {
             @Override
             protected void updateItem(Boolean item, boolean empty) {
                 super.updateItem(item, empty);
-                if (empty) {
+                if (empty || getTableRow() == null) {
                     setGraphic(null);
                 } else {
                     setGraphic(checkBox);
-                    checkBox.setSelected(item != null && item);
+                    S rowItem = getTableRow().getItem();
+                    checkBox.setSelected(selectedItems.contains(rowItem));
                     setAlignment(Pos.CENTER);
                 }
             }
@@ -394,10 +448,19 @@ public class AdvancedTableView<S> extends TableView<S> {
         if (enable) {
             //reuse empty action column for specifying rowNum
             TableColumn<S, Integer> actionCol = (TableColumn<S, Integer>) getColumns().get(0);
-            actionCol.setCellValueFactory(cellData -> {
-                int index = getItems().indexOf(cellData.getValue()) + 1;
-                return new SimpleObjectProperty<>(index);
+            actionCol.setCellFactory(column -> new TableCell<>() {
+                @Override
+                protected void updateItem(Integer item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty || getTableRow() == null) {
+                        setText(null);
+                    } else {
+                        setText(String.valueOf(getTableRow().getIndex() + 1));
+                    }
+                }
             });
         }
     }
+
+
 }

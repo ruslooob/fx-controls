@@ -7,7 +7,7 @@ import java.time.format.DateTimeParseException;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-import static com.ruslooob.fxcontrols.Utils.dateFormatter;
+import static com.ruslooob.fxcontrols.utils.Utils.dateFormatter;
 
 public final class DateEqualsFilterStrategy extends TextFilterStrategy<LocalDate> {
     @Override

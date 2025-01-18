@@ -16,4 +16,5 @@ module com.ruslooob.fxcontrols {
     exports com.ruslooob.fxcontrols.enums;
     exports com.ruslooob.fxcontrols.model;
     exports com.ruslooob.fxcontrols.controls;
+    exports com.ruslooob.fxcontrols.utils to javafx.graphics;
 }

@@ -6,7 +6,6 @@ import lombok.ToString;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.util.Objects;
 
 /**
  * Class for demonstration purposes
@@ -14,6 +13,7 @@ import java.util.Objects;
 @ToString
 @EqualsAndHashCode
 public class Person {
+    private final LongProperty id;
     private final StringProperty firstName;
     private final StringProperty lastName;
     private final IntegerProperty height;
@@ -21,14 +21,18 @@ public class Person {
     private final BooleanProperty isEmployed;
     private final StringProperty gender;
     private final ObjectProperty<LocalTime> createdAt;
+    private final StringProperty infoCol;
 
-    public Person(String firstName,
+    public Person(Long id,
+                  String firstName,
                   String lastName,
                   Integer height,
                   LocalDate dateOfBirth,
                   boolean isEmployed,
                   String gender,
-                  LocalTime createdAt) {
+                  LocalTime createdAt,
+                  String info) {
+        this.id = new SimpleLongProperty(id);
         this.firstName = new SimpleStringProperty(firstName);
         this.lastName = new SimpleStringProperty(lastName);
         this.height = new SimpleIntegerProperty(height);
@@ -36,6 +40,15 @@ public class Person {
         this.isEmployed = new SimpleBooleanProperty(isEmployed);
         this.gender = new SimpleStringProperty(gender);
         this.createdAt = new SimpleObjectProperty<>(createdAt);
+        this.infoCol = new SimpleStringProperty(info);
+    }
+
+    public long getId() {
+        return id.get();
+    }
+
+    public LongProperty idProperty() {
+        return id;
     }
 
     public StringProperty firstNameProperty() {
@@ -90,4 +103,11 @@ public class Person {
         return createdAt;
     }
 
+    public String getInfoCol() {
+        return infoCol.get();
+    }
+
+    public StringProperty infoColProperty() {
+        return infoCol;
+    }
 }
