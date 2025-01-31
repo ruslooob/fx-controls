@@ -10,24 +10,21 @@ import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.Tooltip;
 import javafx.stage.Popup;
-import lombok.AccessLevel;
-import lombok.experimental.FieldDefaults;
 
 import java.util.List;
 import java.util.function.Function;
 
-@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class ComboButton<T> extends Button {
-    static int CELL_SIZE = 30;
-    static int MAX_HEIGHT_CELLS_COUNT = 4;
+    private final static int CELL_SIZE = 30;
+    private final static int MAX_HEIGHT_CELLS_COUNT = 4;
 
-    Popup popup = new Popup();
+    private final Popup popup = new Popup();
     //todo add enter to submit current selection
     //todo add arrow keys to navigate between items
-    ListView<T> listView = new ListView<>();
-    ObjectProperty<Function<T, String>> cellConverterProperty = new SimpleObjectProperty<>(Object::toString);
+    private final ListView<T> listView = new ListView<>();
+    private final ObjectProperty<Function<T, String>> cellConverterProperty = new SimpleObjectProperty<>(Object::toString);
     //todo add tooltip on current selected item
-    ObjectProperty<Function<T, String>> cellTooltipConverterProperty = new SimpleObjectProperty<>(o -> null);
+    private final ObjectProperty<Function<T, String>> cellTooltipConverterProperty = new SimpleObjectProperty<>(o -> null);
 
     public ComboButton() {
         setMinWidth(50);
@@ -127,7 +124,7 @@ public class ComboButton<T> extends Button {
      */
     public void setItems(List<T> values) {
         if (values == null || values.isEmpty()) {
-            throw new IllegalArgumentException("Некорректное значение элементов для ComboButton: %s".formatted(values));
+            throw new IllegalArgumentException(String.format("Некорректное значение элементов для ComboButton: %s", values));
         }
         listView.getItems().setAll(values);
         resetToDefault();

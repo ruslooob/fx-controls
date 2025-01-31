@@ -34,10 +34,6 @@ import javafx.stage.FileChooser;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.util.Duration;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.experimental.FieldDefaults;
 import org.controlsfx.control.ToggleSwitch;
 import org.kordamp.ikonli.fontawesome5.FontAwesomeSolid;
 import org.kordamp.ikonli.javafx.FontIcon;
@@ -56,29 +52,25 @@ import static com.ruslooob.fxcontrols.enums.PropType.ENUM_FILTER_TYPES;
 import static javafx.collections.FXCollections.observableArrayList;
 
 @SuppressWarnings("unchecked")
-@FieldDefaults(level = AccessLevel.PRIVATE)
 public class AdvancedTableView<S> extends TableView<S> {
-    static final String DEFAULT_BOOL_TRUE_STR = "ДА";
-    static final String DEFAULT_BOOL_FALSE_STR = "Нет";
+    private static final String DEFAULT_BOOL_TRUE_STR = "ДА";
+    private static final String DEFAULT_BOOL_FALSE_STR = "Нет";
+    private static final FontIcon sortUpIcon = new FontIcon(FontAwesomeSolid.SORT_UP);
+    private static final FontIcon sortDownIcon = new FontIcon(FontAwesomeSolid.SORT_DOWN);
 
-    final ObservableList<S> items = observableArrayList();
-    final ObservableList<S> sortedItems = observableArrayList();
-    final FilteredList<S> filteredItems;
-    @Getter
-    final ObservableList<S> selectedItems = observableArrayList();
+    private final ObservableList<S> items = observableArrayList();
+    private final ObservableList<S> sortedItems = observableArrayList();
+    private final FilteredList<S> filteredItems;
+    private final ObservableList<S> selectedItems = observableArrayList();
 
-    boolean enableRowNumCol = false;
-    boolean enableMultiSelect = false;
+    private boolean enableRowNumCol = false;
+    private boolean enableMultiSelect = false;
     // Some basic info about columns
-    final List<ColumnInfo<S, ?>> colsInfo = new ArrayList<>();//todo add sort type enum that was apply after checking sort buttons in table header
+    private final List<ColumnInfo<S, ?>> colsInfo = new ArrayList<>();//todo add sort type enum that was apply after checking sort buttons in table header
     // Contains all predicate filters in columns
     //fixme varialbe can be local
-    final Map<ColumnInfo<S, ?>, Predicate<?>> predicateMap = new HashMap<>();
-    @Setter
+    private final Map<ColumnInfo<S, ?>, Predicate<?>> predicateMap = new HashMap<>();
     Consumer<List<S>> exportToCsvHandler;
-
-    static final FontIcon sortUpIcon = new FontIcon(FontAwesomeSolid.SORT_UP);
-    static final FontIcon sortDownIcon = new FontIcon(FontAwesomeSolid.SORT_DOWN);
 
     final PauseTransition debouncePause = new PauseTransition(Duration.millis(250));
 
@@ -221,7 +213,7 @@ public class AdvancedTableView<S> extends TableView<S> {
         List<List<Object>> result = new ArrayList<>();
 
         //add first row for csv output
-        result.add(colsInfo.stream().map(i -> (Object) i.getName()).toList());
+        result.add(colsInfo.stream().map(i -> (Object) i.getName()).collect(Collectors.toList()));
 
         for (S item : sortedData) {
             List<Object> row = new ArrayList<>();
@@ -319,13 +311,11 @@ public class AdvancedTableView<S> extends TableView<S> {
 
     private AdvancedFilter<?> createColumnFilter(ColumnType type, Map<PropType, Object> colProps) {
         switch (type) {
-            case STRING -> {
+            case STRING:
                 return new AdvancedTextFilter<>(List.of(new SubstringFilterStrategy(), new EqualsFilterTypeStrategy(), new StartsWithFilterTypeStrategy()));
-            }
-            case NUMBER -> {
+            case NUMBER:
                 return new AdvancedTextFilter<>(List.of(new NumberEqualsFilterStrategy(), new NumberBeforeFilterStrategy(), new NumberAfterFilterStrategy()));
-            }
-            case BOOL -> {
+            case BOOL:
                 List<String> filterTypes = (List<String>) colProps.get(BOOLEAN_TYPES);
                 List<TextFilterStrategy<String>> enumFilterTypes;
                 if (filterTypes != null) {
@@ -336,25 +326,20 @@ public class AdvancedTableView<S> extends TableView<S> {
                 }
 
                 return new AdvancedEnumFilter(enumFilterTypes);
-            }
-            case DATE -> {
-                // todo Think about implementing more intelligent filters for search by day, month, and year and some patterns.
+            case DATE:// todo Think about implementing more intelligent filters for search by day, month, and year and some patterns.
                 // This could impact the search speed, making it slower. Maybe implement some trade-off solution, for example DatePatternStrategy
                 return new AdvancedDateFilter(List.of(new DateEqualsFilterStrategy(), new DateBeforeFilterStrategy(), new DateAfterFilterStrategy()));
-            }
-            case TIME -> {
+            case TIME:
                 return new AdvancedTimeFilter(List.of(new TimeEqualsFilterStrategy(), new TimeBeforeFilterStrategy(), new TimeAfterFilterStrategy()));
-            }
-            case ENUM -> {
-                List<String> filterTypes = (List<String>) colProps.get(ENUM_FILTER_TYPES);
-                if (filterTypes == null) {
-                    throw new IllegalArgumentException("Cannot create enum column filter without prop: %s. Please, pass it via addColumn method.".formatted(ENUM_FILTER_TYPES));
+            case ENUM:
+                if (colProps.get(ENUM_FILTER_TYPES) == null) {
+                    throw new IllegalArgumentException(String.format("Cannot create enum column filter without prop: %s. Please, pass it via addColumn method.", ENUM_FILTER_TYPES));
                 }
-                List<TextFilterStrategy<String>> enumFilterTypes = filterTypes.stream().map(EnumFilterStrategy::new).map(f -> (TextFilterStrategy<String>) f).collect(Collectors.toList());
+                enumFilterTypes = ((List<String>) colProps.get(ENUM_FILTER_TYPES)).stream().map(EnumFilterStrategy::new).map(f -> (TextFilterStrategy<String>) f).collect(Collectors.toList());
                 enumFilterTypes.add(0, new AllIncludeEnumFilterStrategy());
                 return new AdvancedEnumFilter(enumFilterTypes);
-            }
-            default -> throw new IllegalArgumentException("Unknown column type %s".formatted(type));
+            default:
+                throw new IllegalArgumentException(String.format("Unknown column type %s", type));
         }
     }
 
@@ -392,7 +377,7 @@ public class AdvancedTableView<S> extends TableView<S> {
             return val ? DEFAULT_BOOL_TRUE_STR : DEFAULT_BOOL_FALSE_STR;
         } else {
             if (filterTypes.size() != 2) {
-                throw new IllegalArgumentException("Incorrect size of %s: it must be 2, given %s".formatted(BOOLEAN_TYPES, filterTypes));
+                throw new IllegalArgumentException(String.format("Incorrect size of %s: it must be 2, given %s", BOOLEAN_TYPES, filterTypes));
             }
             return val ? filterTypes.get(0) : filterTypes.get(1);
         }
@@ -462,5 +447,11 @@ public class AdvancedTableView<S> extends TableView<S> {
         }
     }
 
+    public ObservableList<S> getSelectedItems() {
+        return selectedItems;
+    }
 
+    public Consumer<List<S>> getExportToCsvHandler() {
+        return exportToCsvHandler;
+    }
 }

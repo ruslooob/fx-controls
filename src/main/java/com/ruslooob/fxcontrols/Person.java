@@ -1,17 +1,14 @@
 package com.ruslooob.fxcontrols;
 
 import javafx.beans.property.*;
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.Objects;
 
 /**
  * Class for demonstration purposes
  */
-@ToString
-@EqualsAndHashCode
 public class Person {
     private final LongProperty id;
     private final StringProperty firstName;
@@ -109,5 +106,23 @@ public class Person {
 
     public StringProperty infoColProperty() {
         return infoCol;
+    }
+
+    @Override
+    public String toString() {
+        return String.format("%s %s %s", getLastName(), getFirstName(), getDateOfBirth());
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Person person = (Person) o;
+        return Objects.equals(id, person.id) && Objects.equals(firstName, person.firstName) && Objects.equals(lastName, person.lastName) && Objects.equals(height, person.height) && Objects.equals(dateOfBirth, person.dateOfBirth) && Objects.equals(isEmployed, person.isEmployed) && Objects.equals(gender, person.gender) && Objects.equals(createdAt, person.createdAt) && Objects.equals(infoCol, person.infoCol);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, firstName, lastName, height, dateOfBirth, isEmployed, gender, createdAt, infoCol);
     }
 }

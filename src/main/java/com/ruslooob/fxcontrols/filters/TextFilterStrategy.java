@@ -1,28 +1,9 @@
 package com.ruslooob.fxcontrols.filters;
 
-import com.ruslooob.fxcontrols.filters.date.DateAfterFilterStrategy;
-import com.ruslooob.fxcontrols.filters.date.DateBeforeFilterStrategy;
-import com.ruslooob.fxcontrols.filters.date.DateEqualsFilterStrategy;
-import com.ruslooob.fxcontrols.filters.time.TimeAfterFilterStrategy;
-import com.ruslooob.fxcontrols.filters.time.TimeBeforeFilterStrategy;
-import com.ruslooob.fxcontrols.filters.time.TimeEqualsFilterStrategy;
-import com.ruslooob.fxcontrols.filters.enumeration.AllIncludeEnumFilterStrategy;
-import com.ruslooob.fxcontrols.filters.enumeration.EnumFilterStrategy;
-import com.ruslooob.fxcontrols.filters.number.NumberAfterFilterStrategy;
-import com.ruslooob.fxcontrols.filters.number.NumberBeforeFilterStrategy;
-import com.ruslooob.fxcontrols.filters.number.NumberEqualsFilterStrategy;
-import com.ruslooob.fxcontrols.filters.string.EqualsFilterTypeStrategy;
-import com.ruslooob.fxcontrols.filters.string.StartsWithFilterTypeStrategy;
-import com.ruslooob.fxcontrols.filters.string.SubstringFilterStrategy;
-
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-public sealed abstract class TextFilterStrategy<T> permits SubstringFilterStrategy, StartsWithFilterTypeStrategy, EqualsFilterTypeStrategy,
-        DateEqualsFilterStrategy, DateBeforeFilterStrategy, DateAfterFilterStrategy,
-        TimeEqualsFilterStrategy, TimeBeforeFilterStrategy, TimeAfterFilterStrategy,
-        NumberEqualsFilterStrategy, NumberBeforeFilterStrategy, NumberAfterFilterStrategy,
-        EnumFilterStrategy, AllIncludeEnumFilterStrategy {
+public abstract class TextFilterStrategy<T> {
     public abstract Function<String, Predicate<T>> createSearchFunction();
 
     public abstract String toString();

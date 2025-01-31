@@ -1,17 +1,14 @@
 package com.ruslooob.fxcontrols.controls;
 
 import com.ruslooob.fxcontrols.filters.TextFilterStrategy;
-import lombok.AccessLevel;
-import lombok.experimental.FieldDefaults;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class AdvancedDateTimeFilter extends AdvancedFilter<LocalDateTime> {
-    MaskedTextField dateTimeTextField = new MaskedTextField("##.##.#### ##:##");
+    private final MaskedTextField dateTimeTextField = new MaskedTextField("##.##.#### ##:##");
 
     public AdvancedDateTimeFilter(List<? extends TextFilterStrategy<LocalDateTime>> filterTypes) {
         setFilterTypes(filterTypes);

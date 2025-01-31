@@ -8,8 +8,6 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
 import javafx.util.Callback;
-import lombok.AccessLevel;
-import lombok.experimental.FieldDefaults;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -18,11 +16,10 @@ import java.time.LocalTime;
 import static com.ruslooob.fxcontrols.utils.Utils.*;
 
 // todo подумать над тем, нужно ли это вообще в моей библиотеке. Можно переложить на пользователя ответственность за создание CellValueFactory. Пока оставлю это здесь
-@FieldDefaults(level = AccessLevel.PRIVATE)
 public class CellFactoryBuilder {
-    ColumnType type;
-    boolean copyContextMenu = false;
-    final Clipboard clipboard = Clipboard.getSystemClipboard();
+    private ColumnType type;
+    private boolean copyContextMenu = false;
+    private final Clipboard clipboard = Clipboard.getSystemClipboard();
 
     public static CellFactoryBuilder withType(ColumnType type) {
         var builder = new CellFactoryBuilder();
@@ -37,7 +34,7 @@ public class CellFactoryBuilder {
 
     public <S, T> Callback<TableColumn<S, T>, TableCell<S, T>> build() {
         switch (type) {
-            case DATE -> {
+            case DATE:
                 return column -> new TableCell<>() {
                     @Override
                     protected void updateItem(T item, boolean empty) {
@@ -57,8 +54,7 @@ public class CellFactoryBuilder {
                         }
                     }
                 };
-            }
-            case DATE_TIME -> {
+            case DATE_TIME:
                 return column -> new TableCell<>() {
                     @Override
                     protected void updateItem(T item, boolean empty) {
@@ -78,8 +74,7 @@ public class CellFactoryBuilder {
                         }
                     }
                 };
-            }
-            case TIME -> {
+            case TIME:
                 return column -> new TableCell<>() {
                     @Override
                     protected void updateItem(T item, boolean empty) {
@@ -99,8 +94,7 @@ public class CellFactoryBuilder {
                         }
                     }
                 };
-            }
-            case BOOL -> {
+            case BOOL:
                 return column -> new TableCell<>() {
                     @Override
                     protected void updateItem(T item, boolean empty) {
@@ -120,8 +114,8 @@ public class CellFactoryBuilder {
                         }
                     }
                 };
-            }
-            default -> throw new IllegalArgumentException("unknown type: %s".formatted(type));
+            default:
+                throw new IllegalArgumentException(String.format("unknown type: %s", type));
         }
     }
 

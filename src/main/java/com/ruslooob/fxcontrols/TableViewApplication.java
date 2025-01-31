@@ -13,8 +13,6 @@ import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.TableColumn;
 import javafx.stage.Stage;
-import lombok.AccessLevel;
-import lombok.experimental.FieldDefaults;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -27,10 +25,9 @@ import java.util.function.Function;
 import static com.ruslooob.fxcontrols.enums.PropType.ENUM_FILTER_TYPES;
 import static javafx.collections.FXCollections.observableArrayList;
 
-@FieldDefaults(level = AccessLevel.PRIVATE)
 public class TableViewApplication extends Application {
-    static Random random = new Random();
-    static List<String> genders = List.of("М", "Ж", "Undefined");
+    private final Random random = new Random();
+    private final static List<String> genders = List.of("М", "Ж", "Undefined");
 
     public static void main(String[] args) {
         launch();
@@ -106,7 +103,7 @@ public class TableViewApplication extends Application {
         stage.show();
     }
 
-    private static ObservableList<Person> createDataSample(int size) {
+    private ObservableList<Person> createDataSample(int size) {
         ObservableList<Person> data = observableArrayList();
         //таблица нормально работает на 100_000 записях
         for (int i = 0; i < size; i++) {
@@ -117,12 +114,12 @@ public class TableViewApplication extends Application {
 
     static long currId = 0;
 
-    private static Person nextPerson() {
+    private Person nextPerson() {
         return new Person(
                 currId++,
-                nextElem(names) + random.nextInt(0, 100),
-                nextElem(surnames) + random.nextInt(0, 100),
-                random.nextInt(150, 210),
+                nextElem(names) + random.nextInt(100),
+                nextElem(surnames) + random.nextInt(100),
+                random.nextInt(210),
                 nextDate(),
                 random.nextBoolean(),
                 nextElem(genders),
@@ -150,7 +147,7 @@ public class TableViewApplication extends Application {
         return col;
     }
 
-    private static LocalDate nextDate() {
+    private LocalDate nextDate() {
         LocalDate minDate = LocalDate.of(1950, 1, 1);
         LocalDate maxDate = LocalDate.now();
         int minDay = (int) minDate.toEpochDay();
@@ -159,14 +156,13 @@ public class TableViewApplication extends Application {
         return LocalDate.ofEpochDay(randomDay);
     }
 
-    private static LocalTime nextTime() {
-        int minSecond = 0; // 00:00:00
+    private LocalTime nextTime() {
         int maxSecond = 24 * 60 * 60 - 1; // 23:59:59
-        int randomSecond = random.nextInt(minSecond, maxSecond + 1);
+        int randomSecond = random.nextInt(maxSecond + 1);
         return LocalTime.ofSecondOfDay(randomSecond);
     }
 
-    private static <T> T nextElem(List<T> list) {
+    private <T> T nextElem(List<T> list) {
         return list.get(random.nextInt(list.size()));
     }
 }

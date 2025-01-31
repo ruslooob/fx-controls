@@ -1,14 +1,11 @@
 package com.ruslooob.fxcontrols.controls;
 
 import com.ruslooob.fxcontrols.filters.TextFilterStrategy;
-import lombok.AccessLevel;
-import lombok.experimental.FieldDefaults;
 
 import java.util.List;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class AdvancedEnumFilter extends AdvancedFilter<String> {
 
     public AdvancedEnumFilter(List<? extends TextFilterStrategy<String>> filterTypes) {

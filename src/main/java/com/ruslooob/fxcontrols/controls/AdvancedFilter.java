@@ -4,16 +4,13 @@ import com.ruslooob.fxcontrols.filters.TextFilterStrategy;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.scene.layout.HBox;
-import lombok.AccessLevel;
-import lombok.experimental.FieldDefaults;
 
 import java.util.List;
 import java.util.function.Predicate;
 
-@FieldDefaults(level = AccessLevel.PROTECTED, makeFinal = true)
 public abstract class AdvancedFilter<T> extends HBox {
-    ComboButton<TextFilterStrategy<T>> typeComboButton = new ComboButton<>();
-    ObjectProperty<Predicate<T>> predicateProperty = new SimpleObjectProperty<>(s -> true);
+    protected final ComboButton<TextFilterStrategy<T>> typeComboButton = new ComboButton<>();
+    protected final ObjectProperty<Predicate<T>> predicateProperty = new SimpleObjectProperty<>(s -> true);
 
     @SuppressWarnings("unchecked")
     public final void setFilterTypes(List<? extends TextFilterStrategy<T>> filterTypes) {

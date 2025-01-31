@@ -10,14 +10,11 @@ import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-import lombok.Getter;
 
 public class Pagination<T, S> extends VBox {
     private final AdvancedTableView<T> tableView;
     private final PaginationInfo<T, S> pagination;
-    @Getter
     private int currPage;
-    @Getter
     private int pageSize;
 
     public Pagination(AdvancedTableView<T> tableView, PaginationInfo<T, S> pagination, int initialPageSize) {
@@ -48,6 +45,7 @@ public class Pagination<T, S> extends VBox {
             if (currPage > 1) {
                 currPage--;
                 loadPage();
+                //todo check why prevPageFunctionNotUsed
                 currentPageLabel.setText("Страница: " + currPage);
             }
         });
@@ -63,13 +61,21 @@ public class Pagination<T, S> extends VBox {
     }
 
     private void loadPage() {
-        S lastId = pagination.idFunction().apply(tableView.getItems().get(tableView.getItems().size() - 1));
-        ObservableList<T> data = pagination.nextPageFunction().apply(pageSize, lastId);
+        S lastId = pagination.getIdFunction().apply(tableView.getItems().get(tableView.getItems().size() - 1));
+        ObservableList<T> data = pagination.getNextPageFunction().apply(pageSize, lastId);
         tableView.setData(data);
     }
 
     public void setPageSize(int pageSize) {
         this.pageSize = pageSize;
         loadPage();
+    }
+
+    public int getCurrPage() {
+        return currPage;
+    }
+
+    public int getPageSize() {
+        return pageSize;
     }
 }

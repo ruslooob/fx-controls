@@ -19,19 +19,18 @@ ext {
 
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(17)
+        languageVersion = JavaLanguageVersion.of(11)
     }
 }
 
 tasks.withType(JavaCompile) {
     options.encoding = 'UTF-8'
-    // todo think about compatibility with 11 java, or rewrite all code for this compatibility
-    options.release = 17
+    options.release = 11
 }
 
 application {
     mainModule = 'com.ruslooob.fxcontrols'
-    mainClass = 'com.ruslooob.fxcontrols.HelloApplication'
+    mainClass = 'com.ruslooob.fxcontrols.TableViewApplication'
 }
 
 javafx {
@@ -43,8 +42,8 @@ dependencies {
     implementation 'org.kordamp.ikonli:ikonli-javafx:12.3.1'
     implementation 'org.kordamp.ikonli:ikonli-fontawesome5-pack:12.3.1'
 
-    compileOnly 'org.projectlombok:lombok:1.18.36'
-    annotationProcessor 'org.projectlombok:lombok:1.18.36'
+//    compileOnly 'org.projectlombok:lombok:1.18.36'
+//    annotationProcessor 'org.projectlombok:lombok:1.18.36'
 
     implementation 'org.controlsfx:controlsfx:11.2.1'
 

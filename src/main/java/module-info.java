@@ -5,7 +5,6 @@ module com.ruslooob.fxcontrols {
     requires org.kordamp.ikonli.core;
     requires org.kordamp.ikonli.fontawesome5;
     requires org.kordamp.ikonli.javafx;
-    requires static lombok;
     requires org.controlsfx.controls;
 
     exports com.ruslooob.fxcontrols to javafx.graphics;

@@ -5,8 +5,6 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.scene.control.IndexRange;
 import javafx.scene.control.TextField;
-import lombok.*;
-import lombok.experimental.FieldDefaults;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,19 +12,16 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 
-@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
-@Getter
 public class MaskedTextField extends TextField {
-    static final char MASK_ESCAPE = '\'';
-    static final char MASK_NUMBER = '#';
-    static final char MASK_CHARACTER = '?';
-    static final char MASK_HEXADECIMAL = 'H';
-    static final char MASK_UPPER_CHARACTER = 'U';
-    static final char MASK_LOWER_CHARACTER = 'L';
-    static final char MASK_CHAR_OR_NUM = 'A';
-    static final char MASK_ANYTHING = '*';
+    private static final char MASK_ESCAPE = '\'';
+    private static final char MASK_NUMBER = '#';
+    private static final char MASK_CHARACTER = '?';
+    private static final char MASK_HEXADECIMAL = 'H';
+    private static final char MASK_UPPER_CHARACTER = 'U';
+    private static final char MASK_LOWER_CHARACTER = 'L';
+    private static final char MASK_CHAR_OR_NUM = 'A';
+    private static final char MASK_ANYTHING = '*';
 
-    @Getter
     char placeholder;
     StringProperty maskProperty;
     StringProperty plainTextProperty;
@@ -294,33 +289,54 @@ public class MaskedTextField extends TextField {
         setPlainText("");
     }
 
-    @Setter
-    @Getter
-    @AllArgsConstructor
-    @ToString
     private abstract static class MaskCharacter {
         private char value;
+
+        public MaskCharacter(char value) {
+            this.value = value;
+        }
 
         public boolean isLiteral() {
             return false;
         }
 
         abstract boolean accept(char value);
+
+        public char getValue() {
+            return value;
+        }
+
+        public void setValue(char value) {
+            this.value = value;
+        }
+
+        @Override
+        public String toString() {
+            return String.valueOf(value);
+        }
     }
 
     private static class MaskFactory {
         //todo make static method instead of class
         public MaskCharacter createMask(char mask, char value) {
-            return switch (mask) {
-                case MASK_ANYTHING -> new AnythingCharacter(value);
-                case MASK_CHARACTER -> new LetterCharacter(value);
-                case MASK_NUMBER -> new NumericCharacter(value);
-                case MASK_CHAR_OR_NUM -> new AlphaNumericCharacter(value);
-                case MASK_HEXADECIMAL -> new HexCharacter(value);
-                case MASK_LOWER_CHARACTER -> new LowerCaseCharacter(value);
-                case MASK_UPPER_CHARACTER -> new UpperCaseCharacter(value);
-                default -> new LiteralCharacter(value);
-            };
+            switch (mask) {
+                case MASK_ANYTHING:
+                    return new AnythingCharacter(value);
+                case MASK_CHARACTER:
+                    return new LetterCharacter(value);
+                case MASK_NUMBER:
+                    return new NumericCharacter(value);
+                case MASK_CHAR_OR_NUM:
+                    return new AlphaNumericCharacter(value);
+                case MASK_HEXADECIMAL:
+                    return new HexCharacter(value);
+                case MASK_LOWER_CHARACTER:
+                    return new LowerCaseCharacter(value);
+                case MASK_UPPER_CHARACTER:
+                    return new UpperCaseCharacter(value);
+                default:
+                    return new LiteralCharacter(value);
+            }
         }
     }
 

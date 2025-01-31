@@ -4,29 +4,22 @@ import com.ruslooob.fxcontrols.enums.ColumnType;
 import com.ruslooob.fxcontrols.enums.PropType;
 import javafx.beans.property.Property;
 import javafx.scene.control.TableColumn;
-import lombok.AccessLevel;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.experimental.FieldDefaults;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
 
 import static com.ruslooob.fxcontrols.enums.ColumnType.*;
 
-@FieldDefaults(level = AccessLevel.PRIVATE)
-@Getter
-@EqualsAndHashCode
 public class ColumnInfo<S, T> {
-    TableColumn<S, T> column;
-    ColumnType columnType;
-    String name;
-    Function<S, Property<T>> propertyGetter;
+    private final TableColumn<S, T> column;
+    private final ColumnType columnType;
+    private final String name;
+    private final Function<S, Property<T>> propertyGetter;
     //some properties which can be used while constructing column filters.
-    Map<PropType, Object> props;
+    private final Map<PropType, Object> props;
 
     public ColumnInfo(TableColumn<S, T> column, ColumnType columnType) {
         this(column, columnType, Collections.emptyMap());
@@ -50,5 +43,38 @@ public class ColumnInfo<S, T> {
 
     public boolean isSortable() {
         return List.of(STRING, NUMBER, BOOL, DATE, TIME, DATE_TIME).contains(columnType);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ColumnInfo<?, ?> that = (ColumnInfo<?, ?>) o;
+        return Objects.equals(column, that.column) && columnType == that.columnType && Objects.equals(name, that.name) && Objects.equals(propertyGetter, that.propertyGetter) && Objects.equals(props, that.props);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(column, columnType, name, propertyGetter, props);
+    }
+
+    public TableColumn<S, T> getColumn() {
+        return column;
+    }
+
+    public ColumnType getColumnType() {
+        return columnType;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public Function<S, Property<T>> getPropertyGetter() {
+        return propertyGetter;
+    }
+
+    public Map<PropType, Object> getProps() {
+        return props;
     }
 }
